@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to Sliding Auction - Real-time descending price auctions">
+  <title>Login - Sliding Auction</title>
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="/css/global.css">
+
+  <!-- Auth CSS (to be created) -->
+  <link rel="stylesheet" href="/css/auth.css">
+
+  <!-- React 18 via CDN (UMD) -->
+  <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+
+  <!-- HTM for JSX-like syntax -->
+  <script type="module">
+    import htm from 'https://unpkg.com/htm@3.1.1/dist/htm.mjs';
+    window.html = htm.bind(React.createElement);
+  </script>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Sliding Auction</h1>
+        <p class="auth-subtitle">Sign in to your account</p>
+      </div>
+
+      <div id="auth-root">
+        <div class="loading">Loading...</div>
+      </div>
+
+      <div class="auth-footer">
+        <p>Don't have an account? <a href="/register.html">Sign up</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase initialization -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+    import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    window.auth = getAuth(app);
+    window.db = getFirestore(app);
+
+    console.log('[Login] Firebase initialized');
+  </script>
+
+  <!-- Auth form component -->
+  <script type="module">
+    import { AuthForm } from './js/components/AuthForm.js';
+
+    // Render login form
+    const root = ReactDOM.createRoot(document.getElementById('auth-root'));
+    root.render(html`<${AuthForm} mode="login" />`);
+  </script>
+</body>
+</html>

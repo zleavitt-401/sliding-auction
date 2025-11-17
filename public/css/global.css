@@ -1,0 +1,360 @@
+/* Sliding Auction Platform - Global Styles */
+
+/* ==========================================================================
+   CSS Variables - Design System
+   ========================================================================== */
+
+:root {
+  /* Primary Colors */
+  --color-auction-red: #E63946;
+  --color-shield-blue: #457B9D;
+  --color-success-green: #06D6A0;
+  --color-warning-yellow: #FFB703;
+
+  /* Neutral Colors */
+  --color-background: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #212529;
+  --color-text-secondary: #6C757D;
+  --color-border: #DEE2E6;
+
+  /* State Colors */
+  --color-active: #28A745;
+  --color-scheduled: #FFC107;
+  --color-ended: #6C757D;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-size-xs: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-md: 1.25rem;     /* 20px */
+  --font-size-lg: 2rem;        /* 32px (desktop), 1.5rem mobile */
+  --font-size-xl: 3rem;        /* 48px (desktop), 2.25rem mobile */
+
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing Scale */
+  --spacing-xs: 0.25rem;  /* 4px */
+  --spacing-sm: 0.5rem;   /* 8px */
+  --spacing-md: 1rem;     /* 16px */
+  --spacing-lg: 1.5rem;   /* 24px */
+  --spacing-xl: 2rem;     /* 32px */
+  --spacing-2xl: 3rem;    /* 48px */
+
+  /* Breakpoints */
+  --breakpoint-mobile: 768px;
+  --breakpoint-tablet: 1024px;
+
+  /* Animation */
+  --animation-duration: 300ms;
+  --animation-easing: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+h1 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-md);
+}
+
+h2 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+}
+
+h3 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+}
+
+p {
+  margin-bottom: var(--spacing-md);
+}
+
+a {
+  color: var(--color-shield-blue);
+  text-decoration: none;
+  transition: color var(--animation-duration) var(--animation-easing);
+}
+
+a:hover {
+  color: var(--color-auction-red);
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+#app-header {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#app-header h1 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-auction-red);
+}
+
+/* User Info Container */
+.user-info-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-balance {
+  background: linear-gradient(135deg, var(--color-auction-green) 0%, #2D7A4F 100%);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.user-balance:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(69, 123, 157, 0.3);
+}
+
+.user-balance:active {
+  transform: translateY(0);
+}
+
+.user-balance:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.user-email {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  min-height: calc(100vh - 200px);
+}
+
+footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+button, .btn {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all var(--animation-duration) var(--animation-easing);
+  min-height: 44px; /* Touch-friendly */
+}
+
+button:disabled, .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-auction-red);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #C32E3A;
+}
+
+.btn-secondary {
+  background-color: var(--color-shield-blue);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #366A8A;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+.loading {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  color: var(--color-auction-red);
+  background-color: rgba(230, 57, 70, 0.1);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+  margin: var(--spacing-md) 0;
+}
+
+.success {
+  color: var(--color-success-green);
+  background-color: rgba(6, 214, 160, 0.1);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+  margin: var(--spacing-md) 0;
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Focus indicators for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-shield-blue);
+  outline-offset: 2px;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+/* Mobile styles (default - mobile-first) */
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  main {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Desktop and up */
+@media (min-width: 1024px) {
+  #app-header {
+    padding: var(--spacing-lg) var(--spacing-2xl);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ==========================================================================
+   Network Status Notifications
+   ========================================================================== */
+
+.network-notification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-md);
+  text-align: center;
+  font-weight: var(--font-weight-semibold);
+  z-index: 10000;
+  animation: slideDown var(--animation-duration) var(--animation-easing);
+}
+
+.network-notification--success {
+  background-color: var(--color-success-green);
+  color: white;
+}
+
+.network-notification--warning {
+  background-color: var(--color-warning-yellow);
+  color: var(--color-text-primary);
+}
+
+.network-notification--error {
+  background-color: var(--color-auction-red);
+  color: white;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Panel - Sliding Auction Platform">
+  <title>Admin Panel - Sliding Auction</title>
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="/css/global.css">
+
+  <!-- Admin CSS -->
+  <link rel="stylesheet" href="/css/admin.css">
+
+  <!-- React 18 via CDN (UMD) -->
+  <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+
+  <!-- HTM for JSX-like syntax -->
+  <script type="module">
+    import htm from 'https://unpkg.com/htm@3.1.1/dist/htm.mjs';
+    window.html = htm.bind(React.createElement);
+  </script>
+</head>
+<body>
+  <header id="app-header">
+    <div class="header-left">
+      <h1><a href="/">Sliding Auction</a> - Admin Panel</h1>
+    </div>
+    <div id="user-info"></div>
+  </header>
+
+  <main id="root">
+    <div class="loading">Loading admin panel...</div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Sliding Auction Platform</p>
+  </footer>
+
+  <!-- Main app initialization (includes Firebase setup) -->
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- Admin panel app -->
+  <script type="module">
+    import { AdminPanel } from './js/components/AdminPanel.js';
+
+    // T099: Simple password protection
+    function checkAdminAuth() {
+      const isAdminAuthed = sessionStorage.getItem('admin-authenticated');
+
+      if (isAdminAuthed === 'true') {
+        return true;
+      }
+
+      // Simple password prompt (for MVP - will improve post-launch)
+      const password = prompt('Enter admin password:');
+
+      // Simple password check (for MVP only - use proper auth in production)
+      if (password === 'admin123') {
+        sessionStorage.setItem('admin-authenticated', 'true');
+        return true;
+      } else {
+        alert('Incorrect password. Access denied.');
+        window.location.href = '/';
+        return false;
+      }
+    }
+
+    // Wait for Firebase to initialize
+    window.addEventListener('auth-state-changed', () => {
+      // Check authentication
+      if (!window.currentUserId) {
+        alert('You must be logged in to access the admin panel.');
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Check admin password
+      if (!checkAdminAuth()) {
+        return;
+      }
+
+      // Render admin panel
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(html`<${AdminPanel} />`);
+    }, { once: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+/* Authentication Pages - Styles */
+
+/* ==========================================================================
+   Auth Container Layout
+   ========================================================================== */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-shield-blue) 0%, var(--color-auction-red) 100%);
+}
+
+.auth-card {
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: var(--spacing-2xl);
+  max-width: 450px;
+  width: 100%;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .auth-container {
+    padding: var(--spacing-md);
+  }
+
+  .auth-card {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* ==========================================================================
+   Auth Header
+   ========================================================================== */
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-header h1 {
+  color: var(--color-auction-red);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.auth-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Auth Form
+   ========================================================================== */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.form-group input {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: border-color var(--animation-duration) var(--animation-easing);
+  min-height: 44px; /* Touch-friendly */
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-shield-blue);
+  box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: var(--color-background);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-group input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Form Actions
+   ========================================================================== */
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--spacing-md));
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--color-shield-blue);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: color var(--animation-duration) var(--animation-easing);
+  min-height: auto;
+}
+
+.link-button:hover:not(:disabled) {
+  color: var(--color-auction-red);
+  text-decoration: underline;
+}
+
+.link-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Auth Notice
+   ========================================================================== */
+
+.auth-notice {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0;
+  padding: var(--spacing-md);
+  background-color: rgba(69, 123, 157, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-success-green);
+}
+
+.auth-form-description {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Auth Footer
+   ========================================================================== */
+
+.auth-footer {
+  margin-top: var(--spacing-xl);
+  text-align: center;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.auth-footer p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+.auth-footer a {
+  color: var(--color-shield-blue);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: color var(--animation-duration) var(--animation-easing);
+}
+
+.auth-footer a:hover {
+  color: var(--color-auction-red);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Loading State
+   ========================================================================== */
+
+.auth-form .loading {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+/* ==========================================================================
+   Error/Success Messages (inherit from global.css but add specificity)
+   ========================================================================== */
+
+.auth-form .error {
+  color: var(--color-auction-red);
+  background-color: rgba(230, 57, 70, 0.1);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-auction-red);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+.auth-form .success {
+  color: var(--color-success-green);
+  background-color: rgba(6, 214, 160, 0.1);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-success-green);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Submit Button Styling (override global to be full-width)
+   ========================================================================== */
+
+.auth-form .btn-primary,
+.auth-form .btn-secondary {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Ensure inputs have visible focus for keyboard navigation */
+.form-group input:focus-visible {
+  outline: 2px solid var(--color-shield-blue);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .form-group input {
+    border-width: 2px;
+  }
+
+  .auth-card {
+    border: 2px solid var(--color-border);
+  }
+}

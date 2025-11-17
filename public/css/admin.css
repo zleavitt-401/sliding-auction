@@ -1,0 +1,1307 @@
+/**
+ * Admin Panel Styles
+ * Styling for admin interface, auction creation form, and management tools
+ */
+
+/* ========================================
+   Admin Panel Layout
+   ======================================== */
+
+.admin-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-panel__header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.admin-panel__title {
+  font-size: 2rem;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-xs);
+}
+
+.admin-panel__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ========================================
+   Tab Navigation
+   ======================================== */
+
+.admin-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 2px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 200ms ease;
+  white-space: nowrap;
+}
+
+.admin-tab:hover {
+  color: var(--color-text);
+  background: var(--color-bg-secondary);
+}
+
+.admin-tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.admin-content {
+  min-height: 400px;
+}
+
+.admin-placeholder {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   Auction Form
+   ======================================== */
+
+.auction-form-container {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auction-form__title {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-xl);
+}
+
+.auction-form {
+  max-width: 800px;
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: var(--spacing-2xl);
+  padding-bottom: var(--spacing-2xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.form-section__title {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-lg);
+  font-weight: 600;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group--error .form-input,
+.form-group--error .form-textarea,
+.form-group--error .form-select {
+  border-color: var(--color-auction-red);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.form-label .required {
+  color: var(--color-auction-red);
+}
+
+.form-hint {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.form-hint-inline {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.form-error {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-auction-red);
+  margin-top: var(--spacing-xs);
+  font-weight: 600;
+}
+
+/* Form Inputs */
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  color: var(--color-text);
+  background: white;
+  transition: border-color 200ms ease;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-input:disabled,
+.form-textarea:disabled,
+.form-select:disabled {
+  background: var(--color-bg-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Input Groups */
+.form-input-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.form-input-group .form-input {
+  border-radius: 0 8px 8px 0;
+}
+
+.form-input-prefix,
+.form-input-suffix {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.form-input-prefix {
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+
+.form-input-suffix {
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+}
+
+.form-input-group .form-input {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+}
+
+.form-input-group .form-input:first-child {
+  border-left: 2px solid var(--color-border);
+  border-radius: 8px 0 0 8px;
+}
+
+.form-input-group .form-input:last-child {
+  border-right: 2px solid var(--color-border);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Form Row (side-by-side inputs) */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 767px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Radio Buttons */
+.form-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-radio {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.form-radio:hover {
+  border-color: var(--color-primary);
+  background: var(--color-bg-secondary);
+}
+
+.form-radio input[type="radio"] {
+  margin-right: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.form-radio input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Range Sliders */
+.form-range {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(69, 123, 157, 0.4);
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: all 200ms ease;
+}
+
+.form-range::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(69, 123, 157, 0.4);
+}
+
+/* Algorithm Parameters */
+.algorithm-parameters {
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-lg);
+  border-radius: 8px;
+  margin-top: var(--spacing-md);
+}
+
+.algorithm-parameters__title {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md);
+  font-weight: 600;
+}
+
+/* File Input */
+.form-file-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.form-file-input:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-bg-secondary);
+}
+
+.form-file-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Image Preview Grid */
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.image-preview {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  background: rgba(230, 57, 70, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+}
+
+.image-preview__remove:hover {
+  background: var(--color-auction-red);
+  transform: scale(1.1);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.btn-primary--large {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+}
+
+/* Alerts */
+.alert {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-base);
+}
+
+.alert--success {
+  background: rgba(69, 183, 131, 0.1);
+  border: 2px solid var(--color-auction-green);
+  color: var(--color-auction-green);
+}
+
+.alert--error {
+  background: rgba(230, 57, 70, 0.1);
+  border: 2px solid var(--color-auction-red);
+  color: var(--color-auction-red);
+}
+
+/* ========================================
+   Auction Management
+   ======================================== */
+
+.auction-management {
+  max-width: 1200px;
+}
+
+.auction-management__title {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-xl);
+}
+
+.auction-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.auction-section__title {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-lg);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.auction-section__count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.auction-empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Auction Grid */
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+/* Auction Card */
+.auction-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  transition: all 200ms ease;
+}
+
+.auction-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.auction-card--live {
+  border-color: var(--color-auction-red);
+  background: linear-gradient(to bottom, rgba(230, 57, 70, 0.02), var(--color-surface));
+}
+
+.auction-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.auction-card__title {
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  margin: 0;
+  font-weight: 700;
+  flex: 1;
+}
+
+.auction-card__badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auction-card__badge--scheduled {
+  background: rgba(69, 123, 157, 0.1);
+  color: var(--color-primary);
+}
+
+.auction-card__badge--live {
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--color-auction-red);
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.auction-card__body {
+  margin-bottom: var(--spacing-lg);
+}
+
+.auction-card__detail {
+  padding: var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auction-card__detail:last-child {
+  border-bottom: none;
+}
+
+.auction-card__detail strong {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.auction-card__price {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-auction-green);
+}
+
+.auction-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.auction-card__actions button,
+.auction-card__actions a {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Danger Button */
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-auction-red) 0%, #C32E3A 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.4);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Auction Confirmation Details */
+.auction-confirm-details {
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin: var(--spacing-md) 0;
+}
+
+.auction-confirm-details h4 {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+}
+
+.auction-confirm-details ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auction-confirm-details li {
+  padding: var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+/* Warning Alert */
+.alert--warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 2px solid #FFC107;
+  color: #F57C00;
+}
+
+/* Modal Footer Buttons */
+.modal__footer {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.modal__footer button {
+  min-width: 120px;
+}
+
+/* ========================================
+   Admin Dashboard / Monitoring
+   ======================================== */
+
+.admin-dashboard {
+  max-width: 1400px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.dashboard-title {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.auction-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.auction-selector label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.auction-selector .form-select {
+  min-width: 200px;
+}
+
+.dashboard-empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+}
+
+.dashboard-empty h2 {
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md);
+}
+
+.dashboard-empty p {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-lg);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.metric-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  text-align: center;
+  transition: all 200ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card--primary {
+  border-color: var(--color-auction-green);
+  background: linear-gradient(to bottom, rgba(69, 183, 131, 0.05), var(--color-surface));
+}
+
+.metric-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.metric-card__value--price {
+  color: var(--color-auction-green);
+  font-size: 2.5rem;
+}
+
+.metric-card__value--small {
+  font-size: 1.25rem;
+}
+
+.metric-card__detail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Dashboard Content Grid */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-section {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+}
+
+.dashboard-section--large {
+  grid-column: 1 / 2;
+}
+
+.dashboard-section__title {
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md);
+  font-weight: 600;
+}
+
+.dashboard-placeholder {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* User List */
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+}
+
+.user-item__icon {
+  font-size: 1.25rem;
+}
+
+.user-item__name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.user-item__id {
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Algorithm Log */
+.algorithm-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--color-border);
+}
+
+.log-entry__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.log-entry__time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.log-entry__decision {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: rgba(69, 123, 157, 0.1);
+  color: var(--color-primary);
+}
+
+.log-entry__decision--decrease {
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--color-auction-red);
+}
+
+.log-entry__body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.log-entry__reason {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  flex: 1;
+}
+
+.log-entry__price {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+/* ========================================
+   User Management
+   ======================================== */
+
+.user-management {
+  max-width: 1400px;
+}
+
+.user-management__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.user-management__title {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.user-management__stats {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.stats-badge {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.user-empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* User Table (Desktop) */
+.user-table-wrapper {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table thead {
+  background: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.user-table th {
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 200ms ease;
+}
+
+.user-table tbody tr:hover {
+  background: var(--color-bg-secondary);
+}
+
+.user-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.user-table td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.user-email {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.user-name {
+  color: var(--color-text-secondary);
+}
+
+.user-balance .balance-amount {
+  font-weight: 700;
+  color: var(--color-auction-green);
+  font-size: var(--font-size-base);
+}
+
+.user-role {
+  /* Role badge styling below */
+}
+
+.user-date {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.user-actions {
+  white-space: nowrap;
+}
+
+/* Role Badges */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.role-badge--admin {
+  background: rgba(255, 193, 7, 0.1);
+  color: #F57C00;
+}
+
+.role-badge--user {
+  background: rgba(69, 123, 157, 0.1);
+  color: var(--color-primary);
+}
+
+/* Small Button Variant */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: var(--font-size-xs);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  border: none;
+}
+
+.btn-sm--primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #3A6A85 100%);
+  color: white;
+}
+
+.btn-sm--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(69, 123, 157, 0.3);
+}
+
+.btn-sm--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* User Cards (Mobile) */
+.user-cards {
+  display: none;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.user-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  transition: all 200ms ease;
+}
+
+.user-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.user-card__info {
+  flex: 1;
+}
+
+.user-card__email {
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+  font-size: var(--font-size-base);
+}
+
+.user-card__name {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.user-card__body {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.user-card__detail {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+}
+
+.user-card__detail strong {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.user-card__detail .balance-amount {
+  font-weight: 700;
+  color: var(--color-auction-green);
+}
+
+.user-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.user-card__actions button {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Grant Currency Modal */
+.user-current-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.user-current-balance strong {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.user-current-balance .balance-amount {
+  font-weight: 700;
+  color: var(--color-auction-green);
+  font-size: var(--font-size-lg);
+}
+
+.grant-preview {
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin-top: var(--spacing-lg);
+}
+
+.grant-preview__item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.grant-preview__item--add {
+  color: var(--color-auction-green);
+  font-weight: 600;
+}
+
+.grant-preview__item--total {
+  border-top: 2px solid var(--color-border);
+  margin-top: var(--spacing-xs);
+  padding-top: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.grant-preview__item--total span:last-child {
+  color: var(--color-auction-green);
+  font-size: var(--font-size-lg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 1023px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-section--large {
+    grid-column: 1 / 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .auction-form-container {
+    padding: var(--spacing-lg);
+  }
+
+  .admin-tabs {
+    gap: 0;
+  }
+
+  .admin-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .image-preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .auction-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auction-card__actions {
+    flex-direction: column;
+  }
+
+  .modal__footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal__footer button {
+    width: 100%;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .metric-card__value {
+    font-size: 1.5rem;
+  }
+
+  .metric-card__value--price {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .auction-selector {
+    width: 100%;
+  }
+
+  .auction-selector .form-select {
+    flex: 1;
+  }
+
+  /* User Management Mobile */
+  .user-table-wrapper {
+    display: none;
+  }
+
+  .user-cards {
+    display: flex;
+  }
+}

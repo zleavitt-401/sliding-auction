@@ -1,0 +1,368 @@
+openapi: 3.0.3
+info:
+  title: Sliding Auction Platform - Cloud Functions API
+  description: |
+    Server-side Cloud Functions for the Sliding Auction Platform.
+    These functions handle:
+    - Auction price calculations (algorithmic pricing)
+    - Purchase transactions (atomic validation)
+    - User management (balance grants, account creation)
+    - Presence syncing (viewer count updates)
+  version: 1.0.0
+  contact:
+    name: Sliding Auction Platform
+
+servers:
+  - url: https://us-central1-{project-id}.cloudfunctions.net
+    description: Firebase Cloud Functions (US Central)
+    variables:
+      project-id:
+        default: sliding-auction-mvp
+        description: Firebase project ID
+
+tags:
+  - name: Auction
+    description: Auction management and pricing
+  - name: Purchase
+    description: Purchase transactions
+  - name: User
+    description: User account management
+  - name: Admin
+    description: Admin-only functions
+
+paths:
+  /updateAuctionPrice:
+    post:
+      summary: Update auction prices (scheduled function)
+      description: |
+        Runs every 1 second (via Cloud Scheduler).
+        Updates currentPrice for all active (live) auctions based on pricing algorithm.
+        Handles transparent mode (formula-based) and algorithmic mode (dynamic factors).
+      operationId: updateAuctionPrice
+      tags:
+        - Auction
+      security:
+        - schedulerAuth: []
+      responses:
+        '200':
+          description: Prices updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedAuctions:
+                    type: integer
+                    description: Number of auctions updated
+                    example: 1
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /purchaseAuction:
+    post:
+      summary: Purchase auction item
+      description: |
+        Callable function (HTTPS) for users to purchase auction items.
+        Performs atomic validation:
+        - Auction is live
+        - Shield is open (server-side timestamp check)
+        - User has sufficient balance
+        - No other user has purchased first
+
+        Uses Firestore transaction to ensure exactly one winner.
+      operationId: purchaseAuction
+      tags:
+        - Purchase
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - auctionId
+                - expectedPrice
+              properties:
+                auctionId:
+                  type: string
+                  description: Auction document ID
+                  example: "abc123xyz"
+                expectedPrice:
+                  type: integer
+                  description: Price user saw when clicking purchase (cents)
+                  example: 7080
+      responses:
+        '200':
+          description: Purchase successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  finalPrice:
+                    type: integer
+                    description: Actual price paid (cents)
+                    example: 7080
+                  newBalance:
+                    type: integer
+                    description: User's balance after purchase (cents)
+                    example: 2920
+                  transactionId:
+                    type: string
+                    description: Transaction document ID
+                    example: "txn789"
+        '401':
+          description: Unauthenticated (user not logged in)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '412':
+          description: Precondition failed (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                auctionNotActive:
+                  value:
+                    code: "failed-precondition"
+                    message: "Auction is not active"
+                shieldNotOpen:
+                  value:
+                    code: "failed-precondition"
+                    message: "Shield is not open"
+                insufficientBalance:
+                  value:
+                    code: "failed-precondition"
+                    message: "Insufficient balance. Need 7080, have 3000."
+                priceIncreased:
+                  value:
+                    code: "failed-precondition"
+                    message: "Price increased since button click. Please try again."
+
+  /grantCurrency:
+    post:
+      summary: Grant fictional currency to user (admin only)
+      description: |
+        Callable function for admins to grant currency to users.
+        Adds specified amount to user's balance and creates transaction record.
+      operationId: grantCurrency
+      tags:
+        - Admin
+        - User
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - amount
+              properties:
+                userId:
+                  type: string
+                  description: UID of user to grant currency to
+                  example: "user456"
+                amount:
+                  type: integer
+                  description: Amount to grant (cents, must be positive)
+                  minimum: 1
+                  example: 10000
+                description:
+                  type: string
+                  description: Optional description for transaction
+                  example: "Initial balance for testing"
+      responses:
+        '200':
+          description: Currency granted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  newBalance:
+                    type: integer
+                    description: User's balance after grant (cents)
+                    example: 10000
+                  transactionId:
+                    type: string
+                    description: Transaction document ID
+                    example: "txn123"
+        '401':
+          description: Unauthenticated or not admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid input (negative amount, invalid userId)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /createUserAccount:
+    post:
+      summary: Create user account on first login (trigger function)
+      description: |
+        Firestore Auth trigger (onCreate).
+        Automatically creates user document in /users collection when user registers.
+        Initializes balance to 0.
+      operationId: createUserAccount
+      tags:
+        - User
+      security: []
+      responses:
+        '200':
+          description: User account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uid:
+                    type: string
+                    example: "user456"
+                  email:
+                    type: string
+                    example: "user@example.com"
+                  balance:
+                    type: integer
+                    example: 0
+
+  /syncViewerCount:
+    post:
+      summary: Sync viewer count from Realtime Database to Firestore
+      description: |
+        Realtime Database trigger (onUpdate).
+        Listens to /auctionViewerCounts/{auctionId} updates in Realtime Database.
+        Syncs count to Firestore /auctions/{auctionId}.viewerCount field.
+      operationId: syncViewerCount
+      tags:
+        - Auction
+      security: []
+      responses:
+        '200':
+          description: Viewer count synced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctionId:
+                    type: string
+                    example: "abc123"
+                  viewerCount:
+                    type: integer
+                    example: 23
+
+  /cleanupShieldsOnDisconnect:
+    post:
+      summary: Cleanup user shields when they disconnect
+      description: |
+        Realtime Database trigger (onDisconnect).
+        When user disconnects from /presence/{auctionId}/{userId}, closes their shield.
+        Updates /auctions/{auctionId}/shields/{userId} to isOpen: false.
+      operationId: cleanupShieldsOnDisconnect
+      tags:
+        - Auction
+      security: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shield cleaned up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shieldClosed:
+                    type: boolean
+                    example: true
+
+  /updateOpenShieldCount:
+    post:
+      summary: Recalculate open shield count (scheduled function)
+      description: |
+        Runs every 5 seconds (via Cloud Scheduler).
+        Counts documents in /auctions/{auctionId}/shields where isOpen === true.
+        Updates /auctions/{auctionId}.openShieldCount field.
+      operationId: updateOpenShieldCount
+      tags:
+        - Auction
+      security:
+        - schedulerAuth: []
+      responses:
+        '200':
+          description: Shield counts updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedAuctions:
+                    type: integer
+                    example: 1
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code (e.g., "unauthenticated", "failed-precondition")
+          example: "failed-precondition"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Auction is not active"
+        details:
+          type: object
+          description: Optional additional error details
+          additionalProperties: true
+
+  securitySchemes:
+    firebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase Auth ID token (obtained via Firebase Auth SDK)
+
+    schedulerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cloud Scheduler service account token (internal use only)
+
+security:
+  - firebaseAuth: []

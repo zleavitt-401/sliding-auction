@@ -1,0 +1,209 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user is admin (MVP: any authenticated user, POST-MVP: custom claims)
+    function isAdmin() {
+      return isAuthenticated();
+      // POST-MVP: return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate price is within bounds
+    function isValidPrice(price, floor, starting) {
+      return price >= floor && price <= starting;
+    }
+
+    // Server timestamp helpers
+    function isServerTimestamp(value) {
+      return value is timestamp;
+    }
+
+    // ============================================
+    // AUCTIONS COLLECTION
+    // ============================================
+
+    match /auctions/{auctionId} {
+
+      // Anyone authenticated can read auctions
+      allow read: if isAuthenticated();
+
+      // Only admins can create auctions
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll([
+          'itemName', 'itemDescription', 'images', 'startingPrice',
+          'floorPrice', 'currentPrice', 'duration', 'pricingMode',
+          'pricingConfig', 'status', 'viewerCount', 'openShieldCount',
+          'createdAt', 'createdBy'
+        ])
+        && request.resource.data.itemName is string
+        && request.resource.data.itemName.size() >= 1
+        && request.resource.data.itemName.size() <= 100
+        && request.resource.data.startingPrice >= 100  // Min $1.00
+        && request.resource.data.floorPrice >= 100
+        && request.resource.data.floorPrice < request.resource.data.startingPrice
+        && request.resource.data.currentPrice == request.resource.data.startingPrice  // Initialize to starting price
+        && request.resource.data.duration >= 60  // Min 1 minute
+        && request.resource.data.duration <= 7200  // Max 120 minutes
+        && request.resource.data.pricingMode in ['transparent', 'algorithmic']
+        && request.resource.data.status == 'scheduled'  // New auctions start as scheduled
+        && request.resource.data.viewerCount == 0
+        && request.resource.data.openShieldCount == 0
+        && request.resource.data.images.full.size() >= 1
+        && request.resource.data.images.full.size() <= 5
+        && request.resource.data.images.thumbnails.size() == request.resource.data.images.full.size();
+
+      // Only admins can update auctions
+      allow update: if isAdmin()
+        // Prevent changing immutable fields
+        && request.resource.data.startingPrice == resource.data.startingPrice
+        && request.resource.data.floorPrice == resource.data.floorPrice
+        && request.resource.data.duration == resource.data.duration
+        && request.resource.data.pricingMode == resource.data.pricingMode
+        // Validate price is within bounds
+        && request.resource.data.currentPrice >= request.resource.data.floorPrice
+        && request.resource.data.currentPrice <= request.resource.data.startingPrice
+        // Validate status transitions
+        && (
+          // scheduled → live
+          (resource.data.status == 'scheduled' && request.resource.data.status == 'live')
+          // live → ended states
+          || (resource.data.status == 'live' && request.resource.data.status in [
+            'ended - sold', 'ended - no winner', 'ended - admin stopped'
+          ])
+        );
+
+      // Only admins can delete auctions (not recommended, prefer marking as deleted)
+      allow delete: if isAdmin();
+
+      // ============================================
+      // SHIELDS SUBCOLLECTION
+      // ============================================
+
+      match /shields/{userId} {
+
+        // Anyone authenticated can read shield states (for shield count)
+        allow read: if isAuthenticated();
+
+        // Users can only write their own shield state
+        allow create, update: if isOwner(userId)
+          && request.resource.data.userId == userId
+          && request.resource.data.keys().hasAll(['userId', 'isOpen'])
+          // If opening shield, validate cooldown
+          && (
+            !request.resource.data.isOpen  // Closing shield (always allowed)
+            || (
+              request.resource.data.isOpen  // Opening shield
+              && request.resource.data.keys().hasAll(['openedAt', 'closesAt'])
+              // Cooldown check: last closed at least 5 seconds ago
+              && (
+                !('lastClosedAt' in resource.data)  // First time opening
+                || request.time > resource.data.lastClosedAt + duration.value(5, 's')
+              )
+              // Validate timing
+              && request.resource.data.closesAt == request.resource.data.openedAt + duration.value(5, 's')
+              // Auction must be live
+              && get(/databases/$(database)/documents/auctions/$(auctionId)).data.status == 'live'
+            )
+          );
+
+        // Users can delete their own shield state (cleanup)
+        allow delete: if isOwner(userId);
+      }
+
+      // ============================================
+      // PRICE HISTORY SUBCOLLECTION
+      // ============================================
+
+      match /priceHistory/{historyId} {
+
+        // Anyone authenticated can read price history
+        allow read: if isAuthenticated();
+
+        // Only Cloud Functions can write (no direct writes from clients)
+        allow write: if false;
+      }
+
+      // ============================================
+      // ALGORITHM LOG SUBCOLLECTION
+      // ============================================
+
+      match /algorithmLog/{logId} {
+
+        // Only admins can read algorithm log
+        allow read: if isAdmin();
+
+        // Only Cloud Functions can write
+        allow write: if false;
+      }
+    }
+
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+
+    match /users/{userId} {
+
+      // Users can read their own data
+      allow read: if isOwner(userId);
+
+      // Users can create their own document (on registration)
+      allow create: if isOwner(userId)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.balance == 100000  // Starting balance: $1,000.00 (MVP only - POST-MVP: granted by Cloud Function)
+        && request.resource.data.keys().hasAll(['email', 'displayName', 'balance', 'role', 'createdAt', 'lastLoginAt'])
+        && request.resource.data.role == 'user';
+
+      // Only Cloud Functions can update balance (prevent tampering)
+      allow update: if false;
+      // POST-MVP: Allow admins to update lastLogin
+      // allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLogin']);
+
+      // No deletes (use soft delete flag instead)
+      allow delete: if false;
+    }
+
+    // ============================================
+    // TRANSACTIONS COLLECTION
+    // ============================================
+
+    match /transactions/{transactionId} {
+
+      // Users can read their own transactions
+      allow read: if isAuthenticated()
+        && request.auth.uid == resource.data.userId;
+
+      // Only Cloud Functions can create transactions
+      allow create: if false;
+
+      // Transactions are immutable
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // SYSTEM COLLECTION (Schema Version, Config)
+    // ============================================
+
+    match /system/{document} {
+
+      // Anyone can read system config
+      allow read: if true;
+
+      // Only admins can write
+      allow write: if isAdmin();
+    }
+  }
+}

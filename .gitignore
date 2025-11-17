@@ -1,0 +1,39 @@
+# Spec Kit agent folder - may contain credentials and tokens
+.claude/
+
+# Spec Kit specification folder
+.specify/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.local
+
+# Firebase config (contains API keys - will be added to each deployment)
+public/firebase-config.js
+
+# Firebase cache
+.firebase/
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.swp
+
+# OS files
+Thumbs.db
