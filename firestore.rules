@@ -77,8 +77,10 @@ service cloud.firestore {
         && request.resource.data.currentPrice <= request.resource.data.startingPrice
         // Validate status transitions
         && (
+          // scheduled → scheduled (for image updates after creation)
+          (resource.data.status == 'scheduled' && request.resource.data.status == 'scheduled')
           // scheduled → live
-          (resource.data.status == 'scheduled' && request.resource.data.status == 'live')
+          || (resource.data.status == 'scheduled' && request.resource.data.status == 'live')
           // live → ended states
           || (resource.data.status == 'live' && request.resource.data.status in [
             'ended - sold', 'ended - no winner', 'ended - admin stopped'
