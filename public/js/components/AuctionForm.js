@@ -266,6 +266,7 @@ export function AuctionForm() {
       }
 
       // Create document first to get ID
+      console.log('[AuctionForm] Auction data being sent:', JSON.stringify(auctionData, null, 2));
       const docRef = await addDoc(collection(window.db, 'auctions'), auctionData);
       console.log('[AuctionForm] Auction document created:', docRef.id);
 
@@ -301,6 +302,8 @@ export function AuctionForm() {
 
     } catch (err) {
       console.error('[AuctionForm] Error creating auction:', err);
+      console.error('[AuctionForm] Error code:', err.code);
+      console.error('[AuctionForm] Error details:', err);
       setError(`Failed to create auction: ${err.message}`);
     } finally {
       setIsSubmitting(false);
