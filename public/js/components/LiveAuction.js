@@ -73,7 +73,7 @@ export function LiveAuction({ auction: initialAuction }) {
     }
 
     setPreviousPrice(currentAuction.currentPrice);
-  }, [currentAuction?.currentPrice]);
+  }, [currentAuction?.currentPrice, previousPrice]);
 
   // T079-T080: Listen to auction status changes
   useEffect(() => {
