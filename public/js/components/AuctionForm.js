@@ -226,7 +226,8 @@ export function AuctionForm() {
       // T110: Create auction document
       const auctionData = {
         itemName: itemName.trim(),
-        description: description.trim(),
+        itemDescription: description.trim(),
+        images: [], // Will be updated after upload
         startingPrice: parseInt(startingPrice),
         currentPrice: parseInt(startingPrice),
         floorPrice: parseInt(floorPrice),
