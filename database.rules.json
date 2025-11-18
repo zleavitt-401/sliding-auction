@@ -1,27 +1,17 @@
 {
   "rules": {
-    "presence": {
+    "auctionPresence": {
       "$auctionId": {
-        "live": {
-          "$userId": {
-            ".read": true,
-            ".write": "$userId === auth.uid",
-            ".validate": "newData.hasChildren(['online', 'timestamp'])",
-            "online": {
-              ".validate": "newData.isBoolean()"
-            },
-            "timestamp": {
-              ".validate": "newData.isNumber()"
-            }
-          }
+        "$userId": {
+          ".read": true,
+          ".write": "auth != null && $userId === auth.uid"
         }
       }
     },
     "auctionViewerCounts": {
       "$auctionId": {
         ".read": true,
-        ".write": false,
-        ".validate": "newData.isNumber()"
+        ".write": false
       }
     },
     ".read": false,
