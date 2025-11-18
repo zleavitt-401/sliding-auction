@@ -15,7 +15,7 @@ import {
   getDownloadURL
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
 
-import { formatPrice } from '../utils/formatters.js';
+import { formatPrice, parsePriceToCents } from '../utils/formatters.js';
 
 const { useState } = React;
 
@@ -139,19 +139,28 @@ export function AuctionForm() {
       errors.description = 'Description is required';
     }
 
-    const startPrice = parseInt(startingPrice);
-    const floor = parseInt(floorPrice);
+    const startPrice = parseFloat(startingPrice);
+    const floor = parseFloat(floorPrice);
 
     if (!startingPrice || startPrice <= 0) {
-      errors.startingPrice = 'Starting price must be greater than 0';
+      errors.startingPrice = 'Starting price must be greater than $0';
     }
 
     if (!floorPrice || floor <= 0) {
-      errors.floorPrice = 'Floor price must be greater than 0';
+      errors.floorPrice = 'Floor price must be greater than $0';
     }
 
     if (startPrice && floor && floor >= startPrice) {
       errors.floorPrice = 'Floor price must be less than starting price';
+    }
+
+    // Check minimum price ($1.00 = 100 cents)
+    if (startPrice && startPrice < 1) {
+      errors.startingPrice = 'Starting price must be at least $1.00';
+    }
+
+    if (floor && floor < 1) {
+      errors.floorPrice = 'Floor price must be at least $1.00';
     }
 
     const durationNum = parseInt(duration);
@@ -224,13 +233,16 @@ export function AuctionForm() {
       console.log('[AuctionForm] Creating auction...');
 
       // T110: Create auction document
+      const startingPriceCents = parsePriceToCents(startingPrice);
+      const floorPriceCents = parsePriceToCents(floorPrice);
+
       const auctionData = {
         itemName: itemName.trim(),
         itemDescription: description.trim(),
         images: [], // Will be updated after upload
-        startingPrice: parseInt(startingPrice),
-        currentPrice: parseInt(startingPrice),
-        floorPrice: parseInt(floorPrice),
+        startingPrice: startingPriceCents,
+        currentPrice: startingPriceCents,
+        floorPrice: floorPriceCents,
         duration: parseInt(duration) * 60, // Convert to seconds
         pricingMode,
         status: 'scheduled', // T111
@@ -416,12 +428,12 @@ export function AuctionForm() {
                   class="form-input"
                   value=${startingPrice}
                   onChange=${(e) => setStartingPrice(e.target.value)}
-                  placeholder="10000"
+                  placeholder="100.00"
                   min="1"
-                  step="100"
+                  step="0.01"
                 />
               </div>
-              <small class="form-hint">Price in cents (e.g., 10000 = $100.00)</small>
+              <small class="form-hint">Enter price in dollars (e.g., 100 for $100.00)</small>
               ${validationErrors.startingPrice && html`
                 <span class="form-error">${validationErrors.startingPrice}</span>
               `}
@@ -440,9 +452,9 @@ export function AuctionForm() {
                   class="form-input"
                   value=${floorPrice}
                   onChange=${(e) => setFloorPrice(e.target.value)}
-                  placeholder="5000"
+                  placeholder="50.00"
                   min="1"
-                  step="100"
+                  step="0.01"
                 />
               </div>
               <small class="form-hint">Minimum price (must be less than starting)</small>
