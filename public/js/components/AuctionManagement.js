@@ -92,8 +92,10 @@ export function AuctionManagement() {
 
   // T117: Show start confirmation modal
   const handleStartClick = (auction) => {
+    console.log('[AuctionManagement] Start button clicked for auction:', auction.id);
     setSelectedAuction(auction);
     setShowStartModal(true);
+    console.log('[AuctionManagement] Modal should show now');
   };
 
   // T118-T119: Start auction
