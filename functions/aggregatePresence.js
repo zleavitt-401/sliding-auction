@@ -16,7 +16,7 @@ const rtdb = admin.database();
  * Scheduled to run every 5 seconds via Cloud Scheduler
  */
 exports.aggregatePresence = functions.pubsub
-  .schedule('every 5 seconds')
+  .schedule('every 1 minutes')
   .onRun(async (context) => {
     console.log('[aggregatePresence] Starting presence aggregation...');
 

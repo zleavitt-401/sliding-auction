@@ -26,7 +26,7 @@ const FLOOR_TIMER_DURATION = 60; // 60 seconds at floor before ending
  * T150: Create scheduled function
  */
 exports.updateAuctionPrice = functions.pubsub
-  .schedule('every 1 seconds')
+  .schedule('every 1 minutes')
   .onRun(async (context) => {
     console.log('[updateAuctionPrice] Starting price update cycle...');
 

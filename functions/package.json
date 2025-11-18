@@ -4,7 +4,7 @@
   "description": "Cloud Functions for Sliding Auction Platform",
   "main": "index.js",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "scripts": {
     "serve": "firebase emulators:start --only functions",

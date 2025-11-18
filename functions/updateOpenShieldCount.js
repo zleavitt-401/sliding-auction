@@ -15,7 +15,7 @@ const db = admin.firestore();
  * Scheduled to run every 5 seconds via Cloud Scheduler
  */
 exports.updateOpenShieldCount = functions.pubsub
-  .schedule('every 5 seconds')
+  .schedule('every 1 minutes')
   .onRun(async (context) => {
     console.log('[updateOpenShieldCount] Starting shield count update...');
 

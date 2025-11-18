@@ -1,0 +1,22 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      "$auctionId": {
+        "live": {
+          "$userId": {
+            ".read": true,
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        }
+      }
+    },
+    "auctionViewerCounts": {
+      "$auctionId": {
+        ".read": true,
+        ".write": false
+      }
+    }
+  }
+}
