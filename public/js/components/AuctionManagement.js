@@ -93,9 +93,14 @@ export function AuctionManagement() {
   // T117: Show start confirmation modal
   const handleStartClick = (auction) => {
     console.log('[AuctionManagement] Start button clicked for auction:', auction.id);
+    console.log('[AuctionManagement] Before state change - showStartModal:', showStartModal);
     setSelectedAuction(auction);
     setShowStartModal(true);
-    console.log('[AuctionManagement] Modal should show now');
+    console.log('[AuctionManagement] After setState calls');
+    // Log on next render
+    setTimeout(() => {
+      console.log('[AuctionManagement] After render - showStartModal should be true');
+    }, 100);
   };
 
   // T118-T119: Start auction
@@ -179,6 +184,8 @@ export function AuctionManagement() {
       </div>
     `;
   }
+
+  console.log('[AuctionManagement] Render - showStartModal:', showStartModal, 'selectedAuction:', selectedAuction?.id);
 
   return html`
     <div class="auction-management">
