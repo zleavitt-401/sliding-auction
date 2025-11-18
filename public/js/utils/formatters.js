@@ -181,3 +181,9 @@ export function parsePriceToCents(input) {
 
   return null;
 }
+
+/**
+ * Alias for formatDateTime for backward compatibility
+ * @deprecated Use formatDateTime instead
+ */
+export const formatTimestamp = formatDateTime;
