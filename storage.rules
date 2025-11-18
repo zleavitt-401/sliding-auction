@@ -9,9 +9,8 @@ service firebase.storage {
       // Allow public read access to auction images
       allow read: if true;
 
-      // Only allow authenticated admins to upload
-      allow write: if request.auth != null &&
-                      request.auth.token.admin == true;
+      // Only allow authenticated users to upload (MVP - tighten in production)
+      allow write: if request.auth != null;
     }
 
     // Deny all other access by default
