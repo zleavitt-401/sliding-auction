@@ -62,9 +62,8 @@ service cloud.firestore {
         && request.resource.data.status == 'scheduled'  // New auctions start as scheduled
         && request.resource.data.viewerCount == 0
         && request.resource.data.openShieldCount == 0
-        && request.resource.data.images.full.size() >= 1
-        && request.resource.data.images.full.size() <= 5
-        && request.resource.data.images.thumbnails.size() == request.resource.data.images.full.size();
+        // Allow empty images array on creation (will be populated via update)
+        && request.resource.data.images is list;
 
       // Only admins can update auctions
       allow update: if isAdmin()
