@@ -100,24 +100,10 @@ service cloud.firestore {
         allow read: if isAuthenticated();
 
         // Users can only write their own shield state
+        // MVP: Simplified rules - just check ownership and required fields
         allow create, update: if isOwner(userId)
           && request.resource.data.userId == userId
-          && request.resource.data.keys().hasAll(['userId', 'isOpen'])
-          // If opening shield, validate requirements
-          && (
-            !request.resource.data.isOpen  // Closing shield (always allowed)
-            || (
-              request.resource.data.isOpen  // Opening shield
-              && request.resource.data.keys().hasAll(['openedAt', 'closesAt'])
-              // Cooldown check: last closed at least 5 seconds ago (or first time)
-              && (
-                !('lastClosedAt' in resource.data)  // First time opening
-                || request.time > resource.data.lastClosedAt + duration.value(5, 's')
-              )
-              // Auction must be live
-              && get(/databases/$(database)/documents/auctions/$(auctionId)).data.status == 'live'
-            )
-          );
+          && request.resource.data.keys().hasAll(['userId', 'isOpen']);
 
         // Users can delete their own shield state (cleanup)
         allow delete: if isOwner(userId);
