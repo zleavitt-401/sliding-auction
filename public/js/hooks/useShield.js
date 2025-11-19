@@ -133,18 +133,31 @@ export function useShield(auctionId) {
       const userId = window.currentUserId;
       const shieldRef = doc(window.db, 'auctions', auctionId, 'shields', userId);
 
-      // Calculate open and close times
+      // Check existing shield state for cooldown validation
+      const existingShield = await getDoc(shieldRef);
+
+      // Calculate close time (5 seconds from now)
       const now = Date.now();
       const closesAt = new Date(now + SHIELD_DURATION * 1000);
 
-      // Write to Firestore
-      await setDoc(shieldRef, {
+      // Build shield data
+      const shieldData = {
         userId,
         isOpen: true,
         openedAt: serverTimestamp(),
-        closesAt,
-        lastClosedAt: null
-      }, { merge: true });
+        closesAt
+      };
+
+      // Only include lastClosedAt if it doesn't exist (to pass rules check)
+      if (!existingShield.exists() || !existingShield.data().lastClosedAt) {
+        // First time opening - don't include lastClosedAt
+      } else {
+        // Keep the existing lastClosedAt for cooldown validation
+        shieldData.lastClosedAt = existingShield.data().lastClosedAt;
+      }
+
+      // Write to Firestore
+      await setDoc(shieldRef, shieldData, { merge: true });
 
       console.log('[useShield] Shield opened successfully');
 

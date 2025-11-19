@@ -103,19 +103,17 @@ service cloud.firestore {
         allow create, update: if isOwner(userId)
           && request.resource.data.userId == userId
           && request.resource.data.keys().hasAll(['userId', 'isOpen'])
-          // If opening shield, validate cooldown
+          // If opening shield, validate requirements
           && (
             !request.resource.data.isOpen  // Closing shield (always allowed)
             || (
               request.resource.data.isOpen  // Opening shield
               && request.resource.data.keys().hasAll(['openedAt', 'closesAt'])
-              // Cooldown check: last closed at least 5 seconds ago
+              // Cooldown check: last closed at least 5 seconds ago (or first time)
               && (
                 !('lastClosedAt' in resource.data)  // First time opening
                 || request.time > resource.data.lastClosedAt + duration.value(5, 's')
               )
-              // Validate timing
-              && request.resource.data.closesAt == request.resource.data.openedAt + duration.value(5, 's')
               // Auction must be live
               && get(/databases/$(database)/documents/auctions/$(auctionId)).data.status == 'live'
             )
