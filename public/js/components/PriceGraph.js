@@ -4,19 +4,21 @@
  */
 
 import { formatPrice } from '../utils/formatters.js';
+import { generatePredictedPricePoints } from '../utils/priceCalculations.js';
 
 const { useEffect, useRef } = React;
 
 /**
  * Price graph component
  * @param {Object} props - Component props
+ * @param {Object} props.auction - Auction data (for predicted line generation)
  * @param {Array} props.priceHistory - Array of price history points
  * @param {number} props.currentPrice - Current auction price
  * @param {number} props.floorPrice - Floor price
  * @param {number} props.startingPrice - Starting price
  * @returns {JSX.Element} Price graph
  */
-export function PriceGraph({ priceHistory = [], currentPrice, floorPrice, startingPrice }) {
+export function PriceGraph({ auction, priceHistory = [], currentPrice, floorPrice, startingPrice }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
 
@@ -30,7 +32,31 @@ export function PriceGraph({ priceHistory = [], currentPrice, floorPrice, starti
       chartRef.current.destroy();
     }
 
-    // Prepare data
+    // Prepare data based on pricing mode
+    const isTransparent = auction?.pricingMode === 'transparent';
+    const datasets = [];
+
+    // For transparent mode: show predicted line + actual progress
+    if (isTransparent && auction) {
+      // Generate full predicted price line
+      const predictedPoints = generatePredictedPricePoints(auction, 100);
+
+      // Predicted line (light gray, full duration)
+      datasets.push({
+        label: 'Predicted Price',
+        data: predictedPoints,
+        borderColor: 'rgba(150, 150, 150, 0.4)',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 0
+      });
+    }
+
+    // Actual price history (always shown)
     const chartData = priceHistory.map(point => ({
       x: point.timestamp?.toMillis ? point.timestamp.toMillis() : point.timestamp,
       y: point.price / 100 // Convert cents to dollars
@@ -49,26 +75,44 @@ export function PriceGraph({ priceHistory = [], currentPrice, floorPrice, starti
       }
     }
 
+    // Actual price line (red, bold)
+    datasets.push({
+      label: 'Actual Price',
+      data: chartData,
+      borderColor: 'rgb(230, 57, 70)', // auction-red
+      backgroundColor: 'rgba(230, 57, 70, 0.1)',
+      borderWidth: 3,
+      fill: isTransparent ? false : true, // Fill for algorithmic, no fill for transparent
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: 'rgb(230, 57, 70)',
+      pointHoverBorderColor: 'white',
+      pointHoverBorderWidth: 2
+    });
+
+    // Current price marker (moving point)
+    if (currentPrice) {
+      datasets.push({
+        label: 'Current',
+        data: [{
+          x: Date.now(),
+          y: currentPrice / 100
+        }],
+        borderColor: 'rgb(69, 123, 157)', // shield-blue
+        backgroundColor: 'rgb(69, 123, 157)',
+        borderWidth: 3,
+        pointRadius: 8,
+        pointHoverRadius: 10,
+        showLine: false // Just the point, no line
+      });
+    }
+
     // Create chart
     chartRef.current = new Chart(ctx, {
       type: 'line',
       data: {
-        datasets: [
-          {
-            label: 'Price',
-            data: chartData,
-            borderColor: 'rgb(230, 57, 70)', // auction-red
-            backgroundColor: 'rgba(230, 57, 70, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4, // Smooth curves
-            pointRadius: 0, // Hide points for cleaner look
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: 'rgb(230, 57, 70)',
-            pointHoverBorderColor: 'white',
-            pointHoverBorderWidth: 2
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
@@ -208,7 +252,7 @@ export function PriceGraph({ priceHistory = [], currentPrice, floorPrice, starti
         chartRef.current.destroy();
       }
     };
-  }, [priceHistory, currentPrice, floorPrice, startingPrice]);
+  }, [auction, priceHistory, currentPrice, floorPrice, startingPrice]);
 
   return html`
     <div class="price-graph">

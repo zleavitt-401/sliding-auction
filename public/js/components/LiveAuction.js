@@ -119,11 +119,15 @@ export function LiveAuction({ auction: initialAuction }) {
   const {
     id,
     itemName,
+    displayPrice,
     currentPrice,
     startingPrice,
     floorPrice,
     openShieldCount
   } = currentAuction;
+
+  // Use displayPrice for smooth updates, fall back to currentPrice
+  const priceToDisplay = displayPrice || currentPrice;
 
   const endingSoon = isAuctionEndingSoon(currentAuction);
   const nearFloor = isPriceNearFloor(currentAuction);
@@ -157,7 +161,7 @@ export function LiveAuction({ auction: initialAuction }) {
         <!-- Current Price (Large, Prominent) -->
         <div class="live-auction__current-price ${priceJustChanged ? 'price-updated' : ''} ${nearFloor ? 'price-near-floor' : ''}">
           <div class="current-price-label">Current Price</div>
-          <div class="current-price-value">${formatPrice(currentPrice)}</div>
+          <div class="current-price-value">${formatPrice(priceToDisplay)}</div>
           <div class="current-price-range">
             Floor: ${formatPrice(floorPrice)} • Starting: ${formatPrice(startingPrice)}
           </div>
@@ -185,8 +189,9 @@ export function LiveAuction({ auction: initialAuction }) {
             ${priceHistory && priceHistory.length > 0
               ? html`
                 <${PriceGraph}
+                  auction=${currentAuction}
                   priceHistory=${priceHistory}
-                  currentPrice=${currentPrice}
+                  currentPrice=${priceToDisplay}
                   floorPrice=${floorPrice}
                   startingPrice=${startingPrice}
                 />
@@ -239,7 +244,7 @@ export function LiveAuction({ auction: initialAuction }) {
             <h3 class="action-controls__title">Purchase Controls</h3>
             <${ShieldButton}
               auctionId=${id}
-              currentPrice=${currentPrice}
+              currentPrice=${priceToDisplay}
               onPurchase=${(result) => {
                 if (result.success) {
                   // T074: Handle success - show confetti and modal

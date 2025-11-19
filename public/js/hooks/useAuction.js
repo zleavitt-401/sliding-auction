@@ -4,6 +4,7 @@
  */
 
 import { useDocument, useSubcollection, firestoreQuery } from './useFirestore.js';
+import { calculateExpectedPrice } from '../utils/priceCalculations.js';
 
 const { useState, useEffect, useMemo } = React;
 
@@ -27,11 +28,44 @@ export function useAuction(auctionId) {
     ]
   );
 
+  // Client-side price interpolation for smooth updates (transparent mode only)
+  const [displayPrice, setDisplayPrice] = useState(auction?.currentPrice);
+
+  // Interpolate price every second for transparent mode
+  useEffect(() => {
+    if (!auction || auction.pricingMode !== 'transparent' || auction.status !== 'live') {
+      setDisplayPrice(auction?.currentPrice);
+      return;
+    }
+
+    // Calculate expected price every second
+    const interval = setInterval(() => {
+      const expected = calculateExpectedPrice(auction);
+      setDisplayPrice(expected);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction]);
+
+  // Sync to server price when it updates (every 1 minute from Cloud Function)
+  useEffect(() => {
+    if (auction?.currentPrice) {
+      setDisplayPrice(auction.currentPrice);
+    }
+  }, [auction?.currentPrice]);
+
   const loading = loadingAuction || loadingHistory;
   const error = errorAuction || errorHistory;
 
+  // Return auction with interpolated display price
+  const auctionWithDisplayPrice = auction ? {
+    ...auction,
+    displayPrice: displayPrice || auction.currentPrice,
+    serverPrice: auction.currentPrice // Keep original for reference
+  } : null;
+
   return {
-    auction,
+    auction: auctionWithDisplayPrice,
     priceHistory,
     loading,
     error

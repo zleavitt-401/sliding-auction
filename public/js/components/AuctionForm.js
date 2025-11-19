@@ -257,6 +257,23 @@ export function AuctionForm() {
         auctionData.pricingConfig = {
           formula
         };
+
+        // Calculate proper decay rates for exponential/stepped formulas
+        if (formula === 'exponential') {
+          // Calculate decay rate so price reaches floor at end of duration
+          // Formula: floor = starting * e^(-rate * duration)
+          // Solving for rate: rate = -ln(floor/starting) / duration
+          const decayRate = -Math.log(floorPriceCents / startingPriceCents) / durationSeconds;
+          auctionData.pricingConfig.decayRate = decayRate;
+        } else if (formula === 'stepped') {
+          // Calculate step interval and amount for reasonable progression
+          // Default: 10 steps over the duration
+          const numSteps = 10;
+          const stepInterval = Math.floor(durationSeconds / numSteps);
+          const stepAmount = Math.floor((startingPriceCents - floorPriceCents) / numSteps);
+          auctionData.pricingConfig.stepInterval = stepInterval;
+          auctionData.pricingConfig.stepAmount = stepAmount;
+        }
       } else {
         auctionData.pricingConfig = {
           decayRate: parseFloat(decayRate),

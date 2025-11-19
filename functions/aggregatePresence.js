@@ -41,7 +41,7 @@ exports.aggregatePresence = functions.pubsub
 
         try {
           // Get presence count from Realtime Database
-          const presenceRef = rtdb.ref(`presence/${auctionId}/live`);
+          const presenceRef = rtdb.ref(`auctionPresence/${auctionId}`);
           const snapshot = await presenceRef.once('value');
 
           // Count number of children (online users)
