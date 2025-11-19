@@ -246,7 +246,7 @@ export function ShieldButton({ auctionId, currentPrice, onPurchase }) {
             <div class="cooldown-progress">
               <div
                 class="cooldown-progress__bar"
-                style="width: ${progress}%"
+                style=${{ width: `${progress}%` }}
               ></div>
             </div>
 

@@ -165,7 +165,7 @@ export function LiveAuction({ auction: initialAuction }) {
 
         <!-- Time Remaining Progress Bar -->
         <div class="time-remaining-bar ${endingSoon ? 'time-remaining-bar--warning' : ''}">
-          <div class="time-remaining-bar__progress" style="width: ${progress}%"></div>
+          <div class="time-remaining-bar__progress" style=${{ width: `${progress}%` }}></div>
           <div class="time-remaining-bar__label">
             <span class="time-remaining-bar__icon">${endingSoon ? '⚠️' : '⏱'}</span>
             <span class="time-remaining-bar__text">
