@@ -13,7 +13,7 @@ import { PurchaseSuccessModal } from './PurchaseSuccessModal.js';
 import { ErrorModal } from './ErrorModal.js';
 import { AuctionEndedModal } from './AuctionEndedModal.js';
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 /**
  * Live auction component
@@ -24,7 +24,7 @@ const { useState, useEffect } = React;
 export function LiveAuction({ auction: initialAuction }) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [previousPrice, setPreviousPrice] = useState(null);
+  const previousPriceRef = useRef(null);
   const [priceJustChanged, setPriceJustChanged] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [purchaseResult, setPurchaseResult] = useState(null);
@@ -67,13 +67,13 @@ export function LiveAuction({ auction: initialAuction }) {
   useEffect(() => {
     if (!currentAuction?.currentPrice) return;
 
-    if (previousPrice !== null && previousPrice !== currentAuction.currentPrice) {
+    if (previousPriceRef.current !== null && previousPriceRef.current !== currentAuction.currentPrice) {
       setPriceJustChanged(true);
       setTimeout(() => setPriceJustChanged(false), 600);
     }
 
-    setPreviousPrice(currentAuction.currentPrice);
-  }, [currentAuction?.currentPrice, previousPrice]);
+    previousPriceRef.current = currentAuction.currentPrice;
+  }, [currentAuction?.currentPrice]);
 
   // T079-T080: Listen to auction status changes
   useEffect(() => {
