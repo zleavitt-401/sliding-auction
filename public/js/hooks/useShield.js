@@ -133,8 +133,19 @@ export function useShield(auctionId) {
       const userId = window.currentUserId;
       const shieldRef = doc(window.db, 'auctions', auctionId, 'shields', userId);
 
+      // Check auction status first
+      const auctionRef = doc(window.db, 'auctions', auctionId);
+      const auctionSnap = await getDoc(auctionRef);
+      if (!auctionSnap.exists()) {
+        throw new Error('Auction not found');
+      }
+      const auctionData = auctionSnap.data();
+      console.log('[useShield] Auction status:', auctionData.status);
+
       // Check existing shield state for cooldown validation
       const existingShield = await getDoc(shieldRef);
+
+      console.log('[useShield] Existing shield:', existingShield.exists() ? existingShield.data() : 'none');
 
       // Calculate close time (5 seconds from now)
       const now = Date.now();
@@ -151,10 +162,21 @@ export function useShield(auctionId) {
       // Only include lastClosedAt if it doesn't exist (to pass rules check)
       if (!existingShield.exists() || !existingShield.data().lastClosedAt) {
         // First time opening - don't include lastClosedAt
+        console.log('[useShield] First time opening, not including lastClosedAt');
       } else {
         // Keep the existing lastClosedAt for cooldown validation
         shieldData.lastClosedAt = existingShield.data().lastClosedAt;
+        const lastClosed = existingShield.data().lastClosedAt?.toMillis ?
+          existingShield.data().lastClosedAt.toMillis() : existingShield.data().lastClosedAt;
+        const secondsSinceClose = Math.floor((now - lastClosed) / 1000);
+        console.log('[useShield] Last closed', secondsSinceClose, 'seconds ago');
       }
+
+      console.log('[useShield] Shield data to write:', {
+        ...shieldData,
+        openedAt: '[serverTimestamp]',
+        closesAt: closesAt.toISOString()
+      });
 
       // Write to Firestore
       await setDoc(shieldRef, shieldData, { merge: true });
