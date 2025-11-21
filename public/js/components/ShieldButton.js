@@ -6,6 +6,9 @@
 import { useShield, SHIELD_STATES } from '../hooks/useShield.js';
 import { useUser } from '../hooks/useUser.js';
 import { formatPrice } from '../utils/formatters.js';
+import {
+  httpsCallable
+} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js';
 
 const { useState, useEffect } = React;
 
@@ -78,12 +81,15 @@ export function ShieldButton({ auctionId, currentPrice, onPurchase }) {
       console.log('[ShieldButton] Price:', formatPrice(currentPrice));
       console.log('[ShieldButton] Balance:', formatPrice(balance));
 
-      // T073: Call purchaseAuction Cloud Function (Phase 14)
-      const purchaseFunction = window.firebase.functions().httpsCallable('purchaseAuction');
+      // T073: Call purchaseAuction Cloud Function (Phase 14) - v9 modular API
+      const purchaseFunction = httpsCallable(window.functions, 'purchaseAuction');
 
+      // Send timestamp so server can calculate expected price using same formula
+      // This avoids price mismatch between client interpolation and server updates
       const result = await purchaseFunction({
         auctionId: auctionId,
-        expectedPrice: currentPrice
+        expectedPrice: currentPrice, // Still send for client-side validation
+        purchaseTimestamp: Date.now() // Server will use this to calculate accurate price
       });
 
       console.log('[ShieldButton] Purchase successful:', result.data);

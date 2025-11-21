@@ -50,7 +50,9 @@ export function useShield(auctionId) {
 
         if (data.isOpen) {
           // Shield is open - calculate time remaining
-          const closesAt = data.closesAt?.toMillis ? data.closesAt.toMillis() : data.closesAt;
+          const openedAt = data.openedAt?.toMillis ? data.openedAt.toMillis() : data.openedAt;
+          const durationMs = (data.durationSeconds || SHIELD_DURATION) * 1000;
+          const closesAt = openedAt + durationMs;
           const now = Date.now();
           const remaining = Math.max(0, Math.floor((closesAt - now) / 1000));
 
@@ -147,16 +149,13 @@ export function useShield(auctionId) {
 
       console.log('[useShield] Existing shield:', existingShield.exists() ? existingShield.data() : 'none');
 
-      // Calculate close time (5 seconds from now)
-      const now = Date.now();
-      const closesAt = new Date(now + SHIELD_DURATION * 1000);
-
-      // Build shield data
+      // Build shield data with server timestamp for timing accuracy
+      // Server will calculate closesAt based on openedAt + duration
       const shieldData = {
         userId,
         isOpen: true,
         openedAt: serverTimestamp(),
-        closesAt
+        durationSeconds: SHIELD_DURATION // Server will use this to calculate closesAt
       };
 
       // Only include lastClosedAt if it doesn't exist (to pass rules check)
@@ -174,8 +173,7 @@ export function useShield(auctionId) {
 
       console.log('[useShield] Shield data to write:', {
         ...shieldData,
-        openedAt: '[serverTimestamp]',
-        closesAt: closesAt.toISOString()
+        openedAt: '[serverTimestamp]'
       });
 
       // Write to Firestore

@@ -12,6 +12,7 @@ import { ShieldButton } from './ShieldButton.js';
 import { PurchaseSuccessModal } from './PurchaseSuccessModal.js';
 import { ErrorModal } from './ErrorModal.js';
 import { AuctionEndedModal } from './AuctionEndedModal.js';
+import { ImageCarousel } from './ImageCarousel.js';
 
 const { useState, useEffect, useRef } = React;
 
@@ -182,8 +183,20 @@ export function LiveAuction({ auction: initialAuction }) {
       <!-- Main Content Grid -->
       <div class="live-auction__content">
 
-        <!-- Left Column: Price Graph -->
+        <!-- Left Column: Images & Price Graph -->
         <div class="live-auction__graph-container">
+
+          <!-- Images Section -->
+          ${currentAuction.images && currentAuction.images.length > 0 && html`
+            <div class="live-auction__images">
+              <${ImageCarousel}
+                images=${currentAuction.images.map(img => img.full || img.thumbnail)}
+                alt=${itemName}
+              />
+            </div>
+          `}
+
+          <!-- Price Graph Section -->
           <div class="graph-section">
             <h2 class="graph-section__title">Price History</h2>
             ${priceHistory && priceHistory.length > 0
@@ -302,6 +315,17 @@ export function LiveAuction({ auction: initialAuction }) {
               `}
             </dl>
           </div>
+
+          <!-- Item Description (Optional) -->
+          ${currentAuction.itemDescription && html`
+            <div class="auction-details-card">
+              <h3 class="details-card__title">About This Item</h3>
+              <div
+                class="item-description"
+                dangerouslySetInnerHTML=${{ __html: currentAuction.itemDescription }}
+              ></div>
+            </div>
+          `}
         </div>
       </div>
 
