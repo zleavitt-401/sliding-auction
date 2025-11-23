@@ -167,7 +167,7 @@ export function useShield(auctionId) {
         shieldData.lastClosedAt = existingShield.data().lastClosedAt;
         const lastClosed = existingShield.data().lastClosedAt?.toMillis ?
           existingShield.data().lastClosedAt.toMillis() : existingShield.data().lastClosedAt;
-        const secondsSinceClose = Math.floor((now - lastClosed) / 1000);
+        const secondsSinceClose = Math.floor((Date.now() - lastClosed) / 1000);
         console.log('[useShield] Last closed', secondsSinceClose, 'seconds ago');
       }
 

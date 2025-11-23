@@ -255,11 +255,12 @@ export function PriceGraph({ auction, priceHistory = [], currentPrice, floorPric
         }
       } : undefined,
       // Floor zone (red background below floor)
+      // Use chart's y-axis min (floorPrice * 0.9) as yMin so zone doesn't extend beyond visible area
       floorZone: floorPrice ? {
         type: 'box',
-        yMin: 0,
+        yMin: (floorPrice / 100) * 0.9,
         yMax: floorPrice / 100,
-        backgroundColor: 'rgba(220, 53, 69, 0.05)',
+        backgroundColor: 'rgba(220, 53, 69, 0.1)',
         borderWidth: 0
       } : undefined
     };
