@@ -51,6 +51,16 @@ export function useShield(auctionId) {
         if (data.isOpen) {
           // Shield is open - calculate time remaining
           const openedAt = data.openedAt?.toMillis ? data.openedAt.toMillis() : data.openedAt;
+
+          // serverTimestamp() returns null on the client until the server confirms
+          // In that case, assume shield just opened and use full duration
+          if (!openedAt) {
+            console.log('[useShield] Waiting for server timestamp...');
+            setShieldState(SHIELD_STATES.OPEN);
+            setTimeRemaining(SHIELD_DURATION);
+            return;
+          }
+
           const durationMs = (data.durationSeconds || SHIELD_DURATION) * 1000;
           const closesAt = openedAt + durationMs;
           const now = Date.now();
