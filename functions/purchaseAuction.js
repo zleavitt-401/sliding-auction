@@ -154,39 +154,47 @@ exports.purchaseAuction = functions.https.onCall(async (data, context) => {
         );
       }
 
-      // T174: Validate shield is open
+      // T174: Validate shield timing (server-authoritative)
+      // NOTE: We validate based on openedAt + durationSeconds, NOT the isOpen field
+      // because the client may have already set isOpen=false due to auto-close timer
+      // but the server should honor the original timing window
       const now = Date.now();
 
-      if (!shield || !shield.isOpen) {
-        console.log(`[purchaseAuction] Shield not open for user ${userId}`);
+      if (!shield) {
+        console.log(`[purchaseAuction] No shield found for user ${userId}`);
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'You must open your shield before purchasing. Open your shield and try again.'
+        );
+      }
+
+      // Check shield timing (server-side validation) - this is authoritative
+      const openedAt = shield.openedAt?.toMillis ? shield.openedAt.toMillis() : shield.openedAt;
+      const durationSeconds = shield.durationSeconds || 5; // Default to 5 seconds
+
+      if (!openedAt) {
+        console.log(`[purchaseAuction] Shield has no openedAt timestamp for user ${userId}`);
         throw new functions.https.HttpsError(
           'failed-precondition',
           'Your shield must be open to purchase. Open your shield and try again.'
         );
       }
 
-      // Check shield timing (server-side validation)
-      const openedAt = shield.openedAt?.toMillis ? shield.openedAt.toMillis() : shield.openedAt;
-      const durationSeconds = shield.durationSeconds || 5; // Default to 5 seconds
       const closesAt = openedAt + (durationSeconds * 1000);
 
-      if (!openedAt) {
-        throw new functions.https.HttpsError(
-          'failed-precondition',
-          'Invalid shield timing data'
-        );
-      }
+      // Add 1 second tolerance buffer to account for network latency
+      // The full window is: openedAt to closesAt + 1 second
+      const TIMING_TOLERANCE_MS = 1000;
 
-      // Add 500ms tolerance buffer to account for network latency and UI animation
-      const TIMING_TOLERANCE_MS = 500;
-
-      if (now < (openedAt - TIMING_TOLERANCE_MS) || now > (closesAt + TIMING_TOLERANCE_MS)) {
+      if (now < openedAt || now > (closesAt + TIMING_TOLERANCE_MS)) {
         console.log(`[purchaseAuction] Shield timing invalid: now=${now}, open=${openedAt}, close=${closesAt}, tolerance=${TIMING_TOLERANCE_MS}ms`);
         throw new functions.https.HttpsError(
           'failed-precondition',
           'Your shield window has closed. Try again with a new shield.'
         );
       }
+
+      console.log(`[purchaseAuction] Shield timing valid: now=${now}, open=${openedAt}, close=${closesAt}`);
 
       // Calculate actual expected price based on purchase timestamp if provided
       // This ensures client interpolation matches server calculation
