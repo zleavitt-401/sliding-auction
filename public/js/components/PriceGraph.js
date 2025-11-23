@@ -132,24 +132,47 @@ export function PriceGraph({ auction, priceHistory = [], currentPrice, floorPric
     const isTransparent = auction?.pricingMode === 'transparent';
     const datasets = [];
 
-    // For transparent mode: show predicted line + actual progress
+    // For transparent mode: show predicted line split into past (solid) and future (dashed)
     if (isTransparent && auction) {
       // Generate full predicted price line
       const predictedPoints = generatePredictedPricePoints(auction, 100);
+      const now = Date.now();
 
-      // Predicted line (light gray, full duration)
-      datasets.push({
-        label: 'Predicted Price',
-        data: predictedPoints,
-        borderColor: 'rgba(150, 150, 150, 0.4)',
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        borderDash: [5, 5],
-        fill: false,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 0
-      });
+      // Split points into past and future
+      const pastPoints = predictedPoints.filter(p => p.x <= now);
+      const futurePoints = predictedPoints.filter(p => p.x >= now);
+
+      // Past portion (solid, darker) - where price has already traveled
+      if (pastPoints.length > 0) {
+        datasets.push({
+          label: 'Price Path (Traveled)',
+          data: pastPoints,
+          borderColor: 'rgba(100, 100, 100, 0.7)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [], // Solid line
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0
+        });
+      }
+
+      // Future portion (dashed, lighter) - where price will go
+      if (futurePoints.length > 0) {
+        datasets.push({
+          label: 'Predicted Price',
+          data: futurePoints,
+          borderColor: 'rgba(150, 150, 150, 0.4)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0
+        });
+      }
     }
 
     // Actual price history (always shown)
@@ -171,21 +194,25 @@ export function PriceGraph({ auction, priceHistory = [], currentPrice, floorPric
       }
     }
 
-    // Actual price line (red, bold)
-    datasets.push({
-      label: 'Actual Price',
-      data: chartData,
-      borderColor: 'rgb(230, 57, 70)', // auction-red
-      backgroundColor: 'rgba(230, 57, 70, 0.1)',
-      borderWidth: 3,
-      fill: isTransparent ? false : true, // Fill for algorithmic, no fill for transparent
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointHoverBackgroundColor: 'rgb(230, 57, 70)',
-      pointHoverBorderColor: 'white',
-      pointHoverBorderWidth: 2
-    });
+    // For transparent mode: don't show the actual price line (the dashed prediction shows the path)
+    // For algorithmic mode: show the actual price line since there's no prediction
+    if (!isTransparent) {
+      // Actual price line (red, bold) - only for algorithmic mode
+      datasets.push({
+        label: 'Actual Price',
+        data: chartData,
+        borderColor: 'rgb(230, 57, 70)', // auction-red
+        backgroundColor: 'rgba(230, 57, 70, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgb(230, 57, 70)',
+        pointHoverBorderColor: 'white',
+        pointHoverBorderWidth: 2
+      });
+    }
 
     // Current price marker (moving point)
     if (currentPrice) {

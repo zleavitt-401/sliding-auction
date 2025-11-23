@@ -24,6 +24,8 @@ export function PurchaseSuccessModal({
   finalPrice,
   newBalance
 }) {
+  // Sanitize itemName to prevent DOMException from invalid characters
+  const safeItemName = itemName ? String(itemName).replace(/[^\w\s\-.,!?'"]/g, '') : 'Unknown Item';
   // Trigger confetti animation when modal opens
   useEffect(() => {
     if (isOpen && window.confetti) {
@@ -108,7 +110,7 @@ export function PurchaseSuccessModal({
         <div class="modal__body">
           <div class="success-message">
             <p class="success-message__primary">
-              You've successfully purchased <strong>${itemName}</strong>!
+              You've successfully purchased <strong>${safeItemName}</strong>!
             </p>
 
             <div class="purchase-details">
