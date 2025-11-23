@@ -20,8 +20,10 @@ export function ErrorModal({
   onClose,
   title = 'Purchase Failed',
   message,
-  icon = '⚠️'
+  icon = null // Don't use emoji as default
 }) {
+  // Default icon as HTML entity (warning sign)
+  const iconHtml = icon || '&#9888;';
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;
@@ -43,7 +45,7 @@ export function ErrorModal({
       <div class="modal modal--error" onClick=${(e) => e.stopPropagation()}>
         <div class="modal__header">
           <h2 class="modal__title">
-            <span class="modal__icon">${icon}</span>
+            <span class="modal__icon" dangerouslySetInnerHTML=${{ __html: iconHtml }}></span>
             ${title}
           </h2>
           <button
@@ -51,7 +53,7 @@ export function ErrorModal({
             onClick=${onClose}
             aria-label="Close modal"
           >
-            ×
+            <span dangerouslySetInnerHTML=${{ __html: '&times;' }}></span>
           </button>
         </div>
 

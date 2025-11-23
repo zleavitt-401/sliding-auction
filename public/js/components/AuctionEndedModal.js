@@ -45,7 +45,7 @@ export function AuctionEndedModal({
       <div class="modal modal--ended" onClick=${(e) => e.stopPropagation()}>
         <div class="modal__header">
           <h2 class="modal__title">
-            <span class="modal__icon">🏁</span>
+            <span class="modal__icon" dangerouslySetInnerHTML=${{ __html: '&#127937;' }}></span>
             Auction Ended
           </h2>
           <button
@@ -53,7 +53,7 @@ export function AuctionEndedModal({
             onClick=${onClose}
             aria-label="Close modal"
           >
-            ×
+            <span dangerouslySetInnerHTML=${{ __html: '&times;' }}></span>
           </button>
         </div>
 
