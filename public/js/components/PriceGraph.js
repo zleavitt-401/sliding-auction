@@ -181,16 +181,26 @@ export function PriceGraph({ auction, priceHistory = [], currentPrice, floorPric
       y: point.price / 100 // Convert cents to dollars
     }));
 
-    // Add current price as the latest point if not already in history
-    if (currentPrice && chartData.length > 0) {
-      const lastPoint = chartData[chartData.length - 1];
+    // Add current price as the latest point
+    // This ensures the chart shows immediately even before server writes price history
+    if (currentPrice) {
       const currentPriceInDollars = currentPrice / 100;
 
-      if (lastPoint.y !== currentPriceInDollars) {
+      if (chartData.length === 0) {
+        // No history yet - add current price as first point
         chartData.push({
           x: Date.now(),
           y: currentPriceInDollars
         });
+      } else {
+        // Add current price if different from last history point
+        const lastPoint = chartData[chartData.length - 1];
+        if (lastPoint.y !== currentPriceInDollars) {
+          chartData.push({
+            x: Date.now(),
+            y: currentPriceInDollars
+          });
+        }
       }
     }
 

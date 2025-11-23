@@ -199,22 +199,13 @@ export function LiveAuction({ auction: initialAuction }) {
           <!-- Price Graph Section -->
           <div class="graph-section">
             <h2 class="graph-section__title">Price History</h2>
-            ${priceHistory && priceHistory.length > 0
-              ? html`
-                <${PriceGraph}
-                  auction=${currentAuction}
-                  priceHistory=${priceHistory}
-                  currentPrice=${priceToDisplay}
-                  floorPrice=${floorPrice}
-                  startingPrice=${startingPrice}
-                />
-              `
-              : html`
-                <div class="graph-placeholder">
-                  <p>Price history will appear here as the auction progresses.</p>
-                </div>
-              `
-            }
+            <${PriceGraph}
+              auction=${currentAuction}
+              priceHistory=${priceHistory || []}
+              currentPrice=${priceToDisplay}
+              floorPrice=${floorPrice}
+              startingPrice=${startingPrice}
+            />
           </div>
         </div>
 
