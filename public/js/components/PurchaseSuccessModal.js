@@ -25,52 +25,62 @@ export function PurchaseSuccessModal({
   newBalance
 }) {
   // Sanitize itemName to prevent DOMException from invalid characters
-  const safeItemName = itemName ? String(itemName).replace(/[^\w\s\-.,!?'"]/g, '') : 'Unknown Item';
+  // Remove any non-printable characters and limit length
+  const safeItemName = itemName
+    ? String(itemName)
+        .replace(/[^\x20-\x7E]/g, '') // Only allow printable ASCII
+        .substring(0, 100) // Limit length
+    : 'Unknown Item';
+
   // Trigger confetti animation when modal opens
   useEffect(() => {
     if (isOpen && window.confetti) {
-      // Fire confetti from both sides
-      const count = 200;
-      const defaults = {
-        origin: { y: 0.7 },
-        zIndex: 10000
-      };
+      try {
+        // Fire confetti from both sides
+        const count = 200;
+        const defaults = {
+          origin: { y: 0.7 },
+          zIndex: 10000
+        };
 
-      function fire(particleRatio, opts) {
-        window.confetti({
-          ...defaults,
-          ...opts,
-          particleCount: Math.floor(count * particleRatio)
+        function fire(particleRatio, opts) {
+          window.confetti({
+            ...defaults,
+            ...opts,
+            particleCount: Math.floor(count * particleRatio)
+          });
+        }
+
+        // Fire confetti burst
+        fire(0.25, {
+          spread: 26,
+          startVelocity: 55,
         });
+
+        fire(0.2, {
+          spread: 60,
+        });
+
+        fire(0.35, {
+          spread: 100,
+          decay: 0.91,
+          scalar: 0.8
+        });
+
+        fire(0.1, {
+          spread: 120,
+          startVelocity: 25,
+          decay: 0.92,
+          scalar: 1.2
+        });
+
+        fire(0.1, {
+          spread: 120,
+          startVelocity: 45,
+        });
+      } catch (err) {
+        console.error('[PurchaseSuccessModal] Confetti error:', err);
       }
-
-      // Fire confetti burst
-      fire(0.25, {
-        spread: 26,
-        startVelocity: 55,
-      });
-
-      fire(0.2, {
-        spread: 60,
-      });
-
-      fire(0.35, {
-        spread: 100,
-        decay: 0.91,
-        scalar: 0.8
-      });
-
-      fire(0.1, {
-        spread: 120,
-        startVelocity: 25,
-        decay: 0.92,
-        scalar: 1.2
-      });
-
-      fire(0.1, {
-        spread: 120,
-        startVelocity: 45,
-      });
     }
   }, [isOpen]);
 
@@ -95,7 +105,7 @@ export function PurchaseSuccessModal({
       <div class="modal modal--success" onClick=${(e) => e.stopPropagation()}>
         <div class="modal__header">
           <h2 class="modal__title">
-            <span class="modal__icon">🎉</span>
+            <span class="modal__icon" dangerouslySetInnerHTML=${{ __html: '&#127881;' }}></span>
             Congratulations!
           </h2>
           <button
@@ -103,7 +113,7 @@ export function PurchaseSuccessModal({
             onClick=${onClose}
             aria-label="Close modal"
           >
-            ×
+            <span dangerouslySetInnerHTML=${{ __html: '&times;' }}></span>
           </button>
         </div>
 
