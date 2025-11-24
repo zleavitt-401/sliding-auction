@@ -57,8 +57,10 @@ function calculateTransparentPrice(auction, elapsedSeconds) {
 
     case 'stepped':
       // Stepped decay: drop by fixed amount at intervals
-      const stepInterval = pricingConfig.stepInterval || 30;
-      const stepAmount = pricingConfig.stepAmount || Math.floor((startingPrice - floorPrice) / 10);
+      // Use stepCount if provided, otherwise fall back to stepInterval calculation
+      const stepCount = pricingConfig.stepCount || 10;
+      const stepInterval = pricingConfig.stepInterval || Math.floor(duration / stepCount);
+      const stepAmount = pricingConfig.stepAmount || Math.floor((startingPrice - floorPrice) / stepCount);
       const numSteps = Math.floor(elapsedSeconds / stepInterval);
       price = startingPrice - (stepAmount * numSteps);
       break;

@@ -92,11 +92,110 @@ export function AuctionForm() {
   const [viewerMultiplier, setViewerMultiplier] = useState(0.05);
   const [shieldInfluence, setShieldInfluence] = useState(0.02);
 
+  // Exponential decay steepness (0 = gentle, 100 = aggressive)
+  const [expSteepness, setExpSteepness] = useState(50);
+
+  // Stepped decay parameters
+  const [stepCount, setStepCount] = useState(10);
+  const [stepInterval, setStepInterval] = useState(null); // null = auto-calculate
+  const [stepAmount, setStepAmount] = useState(null); // null = auto-calculate
+  const [useManualSteps, setUseManualSteps] = useState(false);
+
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Calculate max steps based on duration (1 step per minute minimum)
+  const durationMinutes = parseInt(duration) || 30;
+  const maxSteps = Math.max(20, durationMinutes);
+  const minSteps = 4;
+
+  // Ensure stepCount stays within bounds when duration changes
+  const effectiveStepCount = Math.max(minSteps, Math.min(stepCount, maxSteps));
+
+  // Calculate decay rate from steepness slider (0-100)
+  // Maps to decay rates from 0.00002 (gentle) to 0.002 (aggressive)
+  const calculateExpDecayRate = (steepness, startPrice, floorPriceCents, durationSec) => {
+    // Use a logarithmic scale for better control
+    // At steepness 0: very gentle curve (takes full duration to approach floor)
+    // At steepness 100: aggressive curve (drops quickly then levels off)
+    const minRate = 0.00002;
+    const maxRate = 0.002;
+    const normalizedSteepness = steepness / 100;
+    // Exponential interpolation for more intuitive control
+    return minRate * Math.pow(maxRate / minRate, normalizedSteepness);
+  };
+
+  // Calculate preview points for the decay graph
+  const generatePreviewPoints = () => {
+    const startPriceCents = parsePriceToCents(startingPrice) || 10000;
+    const floorPriceCents = parsePriceToCents(floorPrice) || 5000;
+    const durationSeconds = durationMinutes * 60;
+
+    if (startPriceCents <= floorPriceCents) return [];
+
+    const points = [];
+    const numPoints = 50;
+
+    for (let i = 0; i <= numPoints; i++) {
+      const progress = i / numPoints;
+      const elapsedSeconds = Math.floor(durationSeconds * progress);
+      let price;
+
+      if (formula === 'linear') {
+        const linearRate = (startPriceCents - floorPriceCents) / durationSeconds;
+        price = startPriceCents - (linearRate * elapsedSeconds);
+      } else if (formula === 'exponential') {
+        const expRate = calculateExpDecayRate(expSteepness, startPriceCents, floorPriceCents, durationSeconds);
+        price = startPriceCents * Math.exp(-expRate * elapsedSeconds);
+      } else if (formula === 'stepped') {
+        const actualStepCount = effectiveStepCount;
+        const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
+        const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
+        const numSteps = Math.floor(elapsedSeconds / actualStepInterval);
+        price = startPriceCents - (actualStepAmount * numSteps);
+      }
+
+      price = Math.max(floorPriceCents, Math.round(price));
+      points.push({ x: progress * 100, y: price / 100 });
+    }
+
+    return points;
+  };
+
+  // Get steepness label for display
+  const getSteepnessLabel = (value) => {
+    if (value <= 20) return 'Very Gentle';
+    if (value <= 40) return 'Gentle';
+    if (value <= 60) return 'Moderate';
+    if (value <= 80) return 'Steep';
+    return 'Very Steep';
+  };
+
+  // Calculate step summary for display
+  const getStepSummary = () => {
+    const durationSeconds = durationMinutes * 60;
+    const startPriceCents = parsePriceToCents(startingPrice) || 10000;
+    const floorPriceCents = parsePriceToCents(floorPrice) || 5000;
+
+    const actualStepCount = effectiveStepCount;
+    const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
+    const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
+
+    const intervalMinutes = Math.floor(actualStepInterval / 60);
+    const intervalSeconds = actualStepInterval % 60;
+    const intervalStr = intervalMinutes > 0
+      ? (intervalSeconds > 0 ? `${intervalMinutes}m ${intervalSeconds}s` : `${intervalMinutes} min`)
+      : `${intervalSeconds}s`;
+
+    return {
+      interval: intervalStr,
+      amount: formatPrice(actualStepAmount),
+      count: actualStepCount
+    };
+  };
 
   // T101: Handle image upload
   const handleImageChange = (e) => {
@@ -235,6 +334,7 @@ export function AuctionForm() {
       // T110: Create auction document
       const startingPriceCents = parsePriceToCents(startingPrice);
       const floorPriceCents = parsePriceToCents(floorPrice);
+      const durationSeconds = parseInt(duration) * 60; // Convert minutes to seconds
 
       const auctionData = {
         itemName: itemName.trim(),
@@ -243,7 +343,7 @@ export function AuctionForm() {
         startingPrice: startingPriceCents,
         currentPrice: startingPriceCents,
         floorPrice: floorPriceCents,
-        duration: parseInt(duration) * 60, // Convert to seconds
+        duration: durationSeconds,
         pricingMode,
         status: 'scheduled', // T111
         viewerCount: 0, // T111
@@ -260,19 +360,19 @@ export function AuctionForm() {
 
         // Calculate proper decay rates for exponential/stepped formulas
         if (formula === 'exponential') {
-          // Calculate decay rate so price reaches floor at end of duration
-          // Formula: floor = starting * e^(-rate * duration)
-          // Solving for rate: rate = -ln(floor/starting) / duration
-          const decayRate = -Math.log(floorPriceCents / startingPriceCents) / durationSeconds;
-          auctionData.pricingConfig.decayRate = decayRate;
+          // Use steepness slider to calculate decay rate
+          const expDecayRate = calculateExpDecayRate(expSteepness, startingPriceCents, floorPriceCents, durationSeconds);
+          auctionData.pricingConfig.decayRate = expDecayRate;
+          auctionData.pricingConfig.steepness = expSteepness; // Store for reference
         } else if (formula === 'stepped') {
-          // Calculate step interval and amount for reasonable progression
-          // Default: 10 steps over the duration
-          const numSteps = 10;
-          const stepInterval = Math.floor(durationSeconds / numSteps);
-          const stepAmount = Math.floor((startingPriceCents - floorPriceCents) / numSteps);
-          auctionData.pricingConfig.stepInterval = stepInterval;
-          auctionData.pricingConfig.stepAmount = stepAmount;
+          // Use user-configured step parameters
+          const actualStepCount = effectiveStepCount;
+          const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
+          const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startingPriceCents - floorPriceCents) / actualStepCount);
+
+          auctionData.pricingConfig.stepCount = actualStepCount;
+          auctionData.pricingConfig.stepInterval = actualStepInterval;
+          auctionData.pricingConfig.stepAmount = actualStepAmount;
         }
       } else {
         auctionData.pricingConfig = {
@@ -310,6 +410,11 @@ export function AuctionForm() {
       setDuration('30');
       setPricingMode('transparent');
       setFormula('linear');
+      setExpSteepness(50);
+      setStepCount(10);
+      setStepInterval(null);
+      setStepAmount(null);
+      setUseManualSteps(false);
       setImages([]);
       setImagePreviewUrls([]);
       setValidationErrors({});
@@ -421,7 +526,7 @@ export function AuctionForm() {
                       onClick=${() => removeImage(index)}
                       aria-label="Remove image"
                     >
-                      ×
+                      <span dangerouslySetInnerHTML=${{ __html: '&times;' }}></span>
                     </button>
                   </div>
                 `)}
@@ -558,6 +663,178 @@ export function AuctionForm() {
                 ${formula === 'stepped' ? 'Price drops in discrete steps' : ''}
               </small>
             </div>
+
+            <!-- Exponential Decay: Steepness Slider -->
+            ${formula === 'exponential' && html`
+              <div class="decay-parameters">
+                <h4 class="decay-parameters__title">Exponential Curve Settings</h4>
+
+                <div class="form-group">
+                  <label class="form-label" for="expSteepness">
+                    Decay Curve: <span class="steepness-label">${getSteepnessLabel(expSteepness)}</span>
+                  </label>
+                  <div class="steepness-slider">
+                    <span class="steepness-slider__label">Gentle</span>
+                    <input
+                      type="range"
+                      id="expSteepness"
+                      class="form-range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value=${expSteepness}
+                      onChange=${(e) => setExpSteepness(parseInt(e.target.value))}
+                    />
+                    <span class="steepness-slider__label">Aggressive</span>
+                  </div>
+                  <small class="form-hint">
+                    ${expSteepness <= 30 ? 'Price drops slowly throughout, reaching floor near the end' : ''}
+                    ${expSteepness > 30 && expSteepness <= 70 ? 'Balanced curve - moderate initial drop, gradual slowdown' : ''}
+                    ${expSteepness > 70 ? 'Price drops quickly at first, then levels off near floor' : ''}
+                  </small>
+                </div>
+              </div>
+            `}
+
+            <!-- Stepped Decay: Step Configuration -->
+            ${formula === 'stepped' && html`
+              <div class="decay-parameters">
+                <h4 class="decay-parameters__title">Step Configuration</h4>
+
+                <div class="form-group">
+                  <label class="form-label" for="stepCount">
+                    Number of Steps: ${effectiveStepCount}
+                  </label>
+                  <input
+                    type="range"
+                    id="stepCount"
+                    class="form-range"
+                    min=${minSteps}
+                    max=${maxSteps}
+                    step="1"
+                    value=${effectiveStepCount}
+                    onChange=${(e) => setStepCount(parseInt(e.target.value))}
+                  />
+                  <small class="form-hint">
+                    Min: ${minSteps} steps, Max: ${maxSteps} steps (based on ${durationMinutes} min duration)
+                  </small>
+                </div>
+
+                <!-- Step Summary -->
+                <div class="step-summary">
+                  <div class="step-summary__item">
+                    <span class="step-summary__label">Price drops every:</span>
+                    <span class="step-summary__value">${getStepSummary().interval}</span>
+                  </div>
+                  <div class="step-summary__item">
+                    <span class="step-summary__label">Drop amount:</span>
+                    <span class="step-summary__value">${getStepSummary().amount}</span>
+                  </div>
+                </div>
+
+                <!-- Manual Override Toggle -->
+                <div class="form-group">
+                  <label class="form-checkbox">
+                    <input
+                      type="checkbox"
+                      checked=${useManualSteps}
+                      onChange=${(e) => setUseManualSteps(e.target.checked)}
+                    />
+                    <span>Customize step interval and amount manually</span>
+                  </label>
+                </div>
+
+                <!-- Manual Step Controls -->
+                ${useManualSteps && html`
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="stepInterval">
+                        Step Interval (seconds)
+                      </label>
+                      <input
+                        type="number"
+                        id="stepInterval"
+                        class="form-input"
+                        value=${stepInterval || Math.floor((durationMinutes * 60) / effectiveStepCount)}
+                        onChange=${(e) => setStepInterval(parseInt(e.target.value) || null)}
+                        min="1"
+                        max=${durationMinutes * 60}
+                      />
+                      <small class="form-hint">How often price drops</small>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label" for="stepAmount">
+                        Step Amount ($)
+                      </label>
+                      <div class="form-input-group">
+                        <span class="form-input-prefix">$</span>
+                        <input
+                          type="number"
+                          id="stepAmount"
+                          class="form-input"
+                          value=${stepAmount || ''}
+                          onChange=${(e) => setStepAmount(e.target.value || null)}
+                          placeholder="Auto"
+                          min="0.01"
+                          step="0.01"
+                        />
+                      </div>
+                      <small class="form-hint">How much price drops each step</small>
+                    </div>
+                  </div>
+                `}
+              </div>
+            `}
+
+            <!-- Live Preview Graph -->
+            ${(startingPrice && floorPrice && parseFloat(startingPrice) > parseFloat(floorPrice)) && html`
+              <div class="decay-preview">
+                <h4 class="decay-preview__title">Price Decay Preview</h4>
+                <div class="decay-preview__graph">
+                  <svg viewBox="0 0 300 150" class="decay-graph">
+                    <!-- Grid lines -->
+                    <line x1="40" y1="10" x2="40" y2="130" stroke="#dee2e6" stroke-width="1" />
+                    <line x1="40" y1="130" x2="290" y2="130" stroke="#dee2e6" stroke-width="1" />
+
+                    <!-- Y-axis labels -->
+                    <text x="35" y="15" text-anchor="end" font-size="8" fill="#6c757d">$${parseFloat(startingPrice).toFixed(0)}</text>
+                    <text x="35" y="133" text-anchor="end" font-size="8" fill="#6c757d">$${parseFloat(floorPrice).toFixed(0)}</text>
+
+                    <!-- X-axis labels -->
+                    <text x="40" y="145" text-anchor="start" font-size="8" fill="#6c757d">0</text>
+                    <text x="165" y="145" text-anchor="middle" font-size="8" fill="#6c757d">${Math.floor(durationMinutes / 2)}m</text>
+                    <text x="290" y="145" text-anchor="end" font-size="8" fill="#6c757d">${durationMinutes}m</text>
+
+                    <!-- Floor price line -->
+                    <line x1="40" y1="130" x2="290" y2="130" stroke="#e63946" stroke-width="1" stroke-dasharray="4,2" />
+
+                    <!-- Price curve -->
+                    <polyline
+                      fill="none"
+                      stroke="#457b9d"
+                      stroke-width="2"
+                      points="${generatePreviewPoints().map(p => {
+                        const x = 40 + (p.x / 100) * 250;
+                        const priceRange = parseFloat(startingPrice) - parseFloat(floorPrice);
+                        const y = 10 + ((parseFloat(startingPrice) - p.y) / priceRange) * 120;
+                        return `${x},${Math.max(10, Math.min(130, y))}`;
+                      }).join(' ')}"
+                    />
+                  </svg>
+                </div>
+                <div class="decay-preview__legend">
+                  <span class="decay-preview__legend-item">
+                    <span class="decay-preview__legend-color" style="background: #457b9d;"></span>
+                    Price curve
+                  </span>
+                  <span class="decay-preview__legend-item">
+                    <span class="decay-preview__legend-color decay-preview__legend-color--dashed" style="background: #e63946;"></span>
+                    Floor price
+                  </span>
+                </div>
+              </div>
+            `}
           `}
 
           <!-- Algorithmic Mode: Parameters -->
@@ -626,7 +903,7 @@ export function AuctionForm() {
             class="btn-primary btn-primary--large"
             disabled=${isSubmitting}
           >
-            ${isSubmitting ? 'Creating Auction...' : '✨ Create Auction'}
+            ${isSubmitting ? 'Creating Auction...' : html`<span dangerouslySetInnerHTML=${{ __html: '&#10024;' }}></span> Create Auction`}
           </button>
         </div>
       </form>
