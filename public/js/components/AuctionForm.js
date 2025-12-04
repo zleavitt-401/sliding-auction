@@ -130,39 +130,47 @@ export function AuctionForm() {
 
   // Calculate preview points for the decay graph
   const generatePreviewPoints = () => {
-    const startPriceCents = parsePriceToCents(startingPrice) || 10000;
-    const floorPriceCents = parsePriceToCents(floorPrice) || 5000;
-    const durationSeconds = durationMinutes * 60;
+    try {
+      const startPriceCents = parsePriceToCents(startingPrice);
+      const floorPriceCents = parsePriceToCents(floorPrice);
+      const durationSeconds = durationMinutes * 60;
 
-    if (startPriceCents <= floorPriceCents) return [];
-
-    const points = [];
-    const numPoints = 50;
-
-    for (let i = 0; i <= numPoints; i++) {
-      const progress = i / numPoints;
-      const elapsedSeconds = Math.floor(durationSeconds * progress);
-      let price;
-
-      if (formula === 'linear') {
-        const linearRate = (startPriceCents - floorPriceCents) / durationSeconds;
-        price = startPriceCents - (linearRate * elapsedSeconds);
-      } else if (formula === 'exponential') {
-        const expRate = calculateExpDecayRate(expSteepness, startPriceCents, floorPriceCents, durationSeconds);
-        price = startPriceCents * Math.exp(-expRate * elapsedSeconds);
-      } else if (formula === 'stepped') {
-        const actualStepCount = effectiveStepCount;
-        const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
-        const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
-        const numSteps = Math.floor(elapsedSeconds / actualStepInterval);
-        price = startPriceCents - (actualStepAmount * numSteps);
+      // Return empty array if prices aren't valid
+      if (!startPriceCents || !floorPriceCents || startPriceCents <= floorPriceCents) {
+        return [];
       }
 
-      price = Math.max(floorPriceCents, Math.round(price));
-      points.push({ x: progress * 100, y: price / 100 });
-    }
+      const points = [];
+      const numPoints = 50;
 
-    return points;
+      for (let i = 0; i <= numPoints; i++) {
+        const progress = i / numPoints;
+        const elapsedSeconds = Math.floor(durationSeconds * progress);
+        let price;
+
+        if (formula === 'linear') {
+          const linearRate = (startPriceCents - floorPriceCents) / durationSeconds;
+          price = startPriceCents - (linearRate * elapsedSeconds);
+        } else if (formula === 'exponential') {
+          const expRate = calculateExpDecayRate(expSteepness, startPriceCents, floorPriceCents, durationSeconds);
+          price = startPriceCents * Math.exp(-expRate * elapsedSeconds);
+        } else if (formula === 'stepped') {
+          const actualStepCount = effectiveStepCount;
+          const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
+          const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
+          const numSteps = Math.floor(elapsedSeconds / actualStepInterval);
+          price = startPriceCents - (actualStepAmount * numSteps);
+        }
+
+        price = Math.max(floorPriceCents, Math.round(price || 0));
+        points.push({ x: progress * 100, y: price / 100 });
+      }
+
+      return points;
+    } catch (err) {
+      console.warn('[AuctionForm] Error in generatePreviewPoints:', err);
+      return [];
+    }
   };
 
   // Get steepness label for display
@@ -176,25 +184,52 @@ export function AuctionForm() {
 
   // Calculate step summary for display
   const getStepSummary = () => {
-    const durationSeconds = durationMinutes * 60;
-    const startPriceCents = parsePriceToCents(startingPrice) || 10000;
-    const floorPriceCents = parsePriceToCents(floorPrice) || 5000;
+    try {
+      const durationSeconds = durationMinutes * 60;
+      const startPriceCents = parsePriceToCents(startingPrice);
+      const floorPriceCents = parsePriceToCents(floorPrice);
 
-    const actualStepCount = effectiveStepCount;
-    const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
-    const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
+      // Return empty if prices are not valid
+      if (!startPriceCents || !floorPriceCents || startPriceCents <= floorPriceCents) {
+        return {
+          interval: '--',
+          amount: '--',
+          count: effectiveStepCount
+        };
+      }
 
-    const intervalMinutes = Math.floor(actualStepInterval / 60);
-    const intervalSeconds = actualStepInterval % 60;
-    const intervalStr = intervalMinutes > 0
-      ? (intervalSeconds > 0 ? `${intervalMinutes}m ${intervalSeconds}s` : `${intervalMinutes} min`)
-      : `${intervalSeconds}s`;
+      const actualStepCount = effectiveStepCount;
+      const actualStepInterval = useManualSteps && stepInterval ? stepInterval : Math.floor(durationSeconds / actualStepCount);
+      const actualStepAmount = useManualSteps && stepAmount ? parsePriceToCents(stepAmount) : Math.floor((startPriceCents - floorPriceCents) / actualStepCount);
 
-    return {
-      interval: intervalStr,
-      amount: formatPrice(actualStepAmount),
-      count: actualStepCount
-    };
+      // Validate step amount
+      if (!actualStepAmount || actualStepAmount <= 0) {
+        return {
+          interval: '--',
+          amount: '--',
+          count: actualStepCount
+        };
+      }
+
+      const intervalMinutes = Math.floor(actualStepInterval / 60);
+      const intervalSeconds = actualStepInterval % 60;
+      const intervalStr = intervalMinutes > 0
+        ? (intervalSeconds > 0 ? `${intervalMinutes}m ${intervalSeconds}s` : `${intervalMinutes} min`)
+        : `${intervalSeconds}s`;
+
+      return {
+        interval: intervalStr,
+        amount: formatPrice(actualStepAmount),
+        count: actualStepCount
+      };
+    } catch (err) {
+      console.warn('[AuctionForm] Error in getStepSummary:', err);
+      return {
+        interval: '--',
+        amount: '--',
+        count: effectiveStepCount
+      };
+    }
   };
 
   // T101: Handle image upload
