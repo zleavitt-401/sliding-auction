@@ -820,54 +820,8 @@ export function AuctionForm() {
               </div>
             `}
 
-            <!-- Live Preview Graph -->
-            ${(startingPrice && floorPrice && parseFloat(startingPrice) > parseFloat(floorPrice)) && html`
-              <div class="decay-preview">
-                <h4 class="decay-preview__title">Price Decay Preview</h4>
-                <div class="decay-preview__graph">
-                  <svg viewBox="0 0 300 150" class="decay-graph">
-                    <!-- Grid lines -->
-                    <line x1="40" y1="10" x2="40" y2="130" stroke="#dee2e6" stroke-width="1" />
-                    <line x1="40" y1="130" x2="290" y2="130" stroke="#dee2e6" stroke-width="1" />
-
-                    <!-- Y-axis labels -->
-                    <text x="35" y="15" text-anchor="end" font-size="8" fill="#6c757d">$${parseFloat(startingPrice).toFixed(0)}</text>
-                    <text x="35" y="133" text-anchor="end" font-size="8" fill="#6c757d">$${parseFloat(floorPrice).toFixed(0)}</text>
-
-                    <!-- X-axis labels -->
-                    <text x="40" y="145" text-anchor="start" font-size="8" fill="#6c757d">0</text>
-                    <text x="165" y="145" text-anchor="middle" font-size="8" fill="#6c757d">${Math.floor(durationMinutes / 2)}m</text>
-                    <text x="290" y="145" text-anchor="end" font-size="8" fill="#6c757d">${durationMinutes}m</text>
-
-                    <!-- Floor price line -->
-                    <line x1="40" y1="130" x2="290" y2="130" stroke="#e63946" stroke-width="1" stroke-dasharray="4,2" />
-
-                    <!-- Price curve -->
-                    <polyline
-                      fill="none"
-                      stroke="#457b9d"
-                      stroke-width="2"
-                      points="${generatePreviewPoints().map(p => {
-                        const x = 40 + (p.x / 100) * 250;
-                        const priceRange = parseFloat(startingPrice) - parseFloat(floorPrice);
-                        const y = 10 + ((parseFloat(startingPrice) - p.y) / priceRange) * 120;
-                        return `${x},${Math.max(10, Math.min(130, y))}`;
-                      }).join(' ')}"
-                    />
-                  </svg>
-                </div>
-                <div class="decay-preview__legend">
-                  <span class="decay-preview__legend-item">
-                    <span class="decay-preview__legend-color" style="background: #457b9d;"></span>
-                    Price curve
-                  </span>
-                  <span class="decay-preview__legend-item">
-                    <span class="decay-preview__legend-color decay-preview__legend-color--dashed" style="background: #e63946;"></span>
-                    Floor price
-                  </span>
-                </div>
-              </div>
-            `}
+            <!-- Live Preview Graph - temporarily disabled due to React rendering issues -->
+            <!-- TODO: Re-enable preview graph after fixing HTM/React SVG compatibility -->
           `}
 
           <!-- Algorithmic Mode: Parameters -->
