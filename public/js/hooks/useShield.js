@@ -109,8 +109,13 @@ export function useShield(auctionId) {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             if (shieldState === SHIELD_STATES.OPEN) {
-              // Auto-close shield when time runs out
-              closeShield();
+              // DON'T close the shield in Firestore - let the server handle timing validation
+              // Just update the UI state to show it's expired
+              // The server validates based on openedAt timestamp, not the isOpen field
+              // This prevents race conditions where the client closes the shield while
+              // a purchase request is in flight
+              setShieldState(SHIELD_STATES.CLOSED);
+              console.log('[useShield] Shield timer expired (UI only - not closed in Firestore)');
             } else if (shieldState === SHIELD_STATES.COOLDOWN) {
               setShieldState(SHIELD_STATES.CLOSED);
             }
