@@ -706,7 +706,7 @@ export function AuctionForm() {
 
                 <div class="form-group">
                   <label class="form-label" for="expSteepness">
-                    Decay Curve: <span class="steepness-label">${getSteepnessLabel(expSteepness)}</span>
+                    Decay Curve: <span class="steepness-label">${expSteepness <= 20 ? 'Very Gentle' : expSteepness <= 40 ? 'Gentle' : expSteepness <= 60 ? 'Moderate' : expSteepness <= 80 ? 'Steep' : 'Very Steep'}</span>
                   </label>
                   <div class="steepness-slider">
                     <span class="steepness-slider__label">Gentle</span>
@@ -723,9 +723,7 @@ export function AuctionForm() {
                     <span class="steepness-slider__label">Aggressive</span>
                   </div>
                   <small class="form-hint">
-                    ${expSteepness <= 30 ? 'Price drops slowly throughout, reaching floor near the end' : ''}
-                    ${expSteepness > 30 && expSteepness <= 70 ? 'Balanced curve - moderate initial drop, gradual slowdown' : ''}
-                    ${expSteepness > 70 ? 'Price drops quickly at first, then levels off near floor' : ''}
+                    ${expSteepness <= 30 ? 'Price drops slowly throughout, reaching floor near the end' : expSteepness <= 70 ? 'Balanced curve - moderate initial drop, gradual slowdown' : 'Price drops quickly at first, then levels off near floor'}
                   </small>
                 </div>
               </div>
@@ -755,15 +753,15 @@ export function AuctionForm() {
                   </small>
                 </div>
 
-                <!-- Step Summary -->
+                <!-- Step Summary (auto-calculated) -->
                 <div class="step-summary">
                   <div class="step-summary__item">
                     <span class="step-summary__label">Price drops every:</span>
-                    <span class="step-summary__value">${getStepSummary().interval}</span>
+                    <span class="step-summary__value">${(startingPrice && floorPrice && parseFloat(startingPrice) > parseFloat(floorPrice)) ? (Math.floor((durationMinutes * 60 / effectiveStepCount) / 60) > 0 ? Math.floor((durationMinutes * 60 / effectiveStepCount) / 60) + 'm' : Math.round(durationMinutes * 60 / effectiveStepCount) + 's') : '--'}</span>
                   </div>
                   <div class="step-summary__item">
                     <span class="step-summary__label">Drop amount:</span>
-                    <span class="step-summary__value">${getStepSummary().amount}</span>
+                    <span class="step-summary__value">${(startingPrice && floorPrice && parseFloat(startingPrice) > parseFloat(floorPrice)) ? '$' + (Math.floor((parsePriceToCents(startingPrice) - parsePriceToCents(floorPrice)) / effectiveStepCount) / 100).toFixed(2) : '--'}</span>
                   </div>
                 </div>
 
