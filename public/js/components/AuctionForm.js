@@ -116,16 +116,34 @@ export function AuctionForm() {
   const effectiveStepCount = Math.max(minSteps, Math.min(stepCount, maxSteps));
 
   // Calculate decay rate from steepness slider (0-100)
-  // Maps to decay rates from 0.00002 (gentle) to 0.002 (aggressive)
+  // For exponential decay: price = startingPrice * e^(-rate * time)
+  // To reach floor at duration: floorPrice = startingPrice * e^(-rate * duration)
+  // Solving for rate: rate = -ln(floorPrice / startingPrice) / duration
   const calculateExpDecayRate = (steepness, startPrice, floorPriceCents, durationSec) => {
-    // Use a logarithmic scale for better control
-    // At steepness 0: very gentle curve (takes full duration to approach floor)
-    // At steepness 100: aggressive curve (drops quickly then levels off)
-    const minRate = 0.00002;
-    const maxRate = 0.002;
+    // Calculate the base rate that would reach exactly the floor at duration end
+    const priceRatio = floorPriceCents / startPrice;
+    const baseRate = -Math.log(priceRatio) / durationSec;
+
+    // Now adjust based on steepness:
+    // - Gentle (0-30): Reach floor slower (0.7x to 1.0x base rate)
+    // - Moderate (31-70): Near base rate (1.0x to 1.3x)
+    // - Aggressive (71-100): Reach floor faster, overshoot protection (1.3x to 2.0x)
     const normalizedSteepness = steepness / 100;
-    // Exponential interpolation for more intuitive control
-    return minRate * Math.pow(maxRate / minRate, normalizedSteepness);
+
+    // Use a curve that gives more control in the middle ranges
+    let multiplier;
+    if (normalizedSteepness <= 0.3) {
+      // Gentle: 0.7x to 1.0x
+      multiplier = 0.7 + (normalizedSteepness / 0.3) * 0.3;
+    } else if (normalizedSteepness <= 0.7) {
+      // Moderate: 1.0x to 1.3x
+      multiplier = 1.0 + ((normalizedSteepness - 0.3) / 0.4) * 0.3;
+    } else {
+      // Aggressive: 1.3x to 2.0x
+      multiplier = 1.3 + ((normalizedSteepness - 0.7) / 0.3) * 0.7;
+    }
+
+    return baseRate * multiplier;
   };
 
   // Calculate preview points for the decay graph
