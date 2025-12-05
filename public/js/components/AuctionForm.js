@@ -124,26 +124,30 @@ export function AuctionForm() {
     const priceRatio = floorPriceCents / startPrice;
     const baseRate = -Math.log(priceRatio) / durationSec;
 
-    // Now adjust based on steepness:
-    // - Gentle (0-30): Reach floor slower (0.7x to 1.0x base rate)
-    // - Moderate (31-70): Near base rate (1.0x to 1.3x)
-    // - Aggressive (71-100): Reach floor faster, overshoot protection (1.3x to 2.0x)
+    // Now adjust based on steepness to control the SHAPE of the curve:
+    // The key insight: exponential decay naturally drops fast then slows
+    // - Lower rates = more linear (gentle)
+    // - Higher rates = more exponential (aggressive early drop)
+    // But we MUST ensure it reaches floor at the end, not before!
+
+    // Strategy: Adjust the "target time" to reach floor
+    // - Gentle: Reach floor at 140% of duration (so it's still descending at end)
+    // - Moderate: Reach floor at 100% of duration (exactly at end)
+    // - Aggressive: Reach floor at 80% of duration (reaches floor early, stays there)
     const normalizedSteepness = steepness / 100;
 
-    // Use a curve that gives more control in the middle ranges
-    let multiplier;
-    if (normalizedSteepness <= 0.3) {
-      // Gentle: 0.7x to 1.0x
-      multiplier = 0.7 + (normalizedSteepness / 0.3) * 0.3;
-    } else if (normalizedSteepness <= 0.7) {
-      // Moderate: 1.0x to 1.3x
-      multiplier = 1.0 + ((normalizedSteepness - 0.3) / 0.4) * 0.3;
+    let targetTimeMultiplier;
+    if (normalizedSteepness <= 0.5) {
+      // Gentle to Moderate: 1.4x down to 1.0x
+      targetTimeMultiplier = 1.4 - (normalizedSteepness / 0.5) * 0.4;
     } else {
-      // Aggressive: 1.3x to 2.0x
-      multiplier = 1.3 + ((normalizedSteepness - 0.7) / 0.3) * 0.7;
+      // Moderate to Aggressive: 1.0x down to 0.8x
+      targetTimeMultiplier = 1.0 - ((normalizedSteepness - 0.5) / 0.5) * 0.2;
     }
 
-    return baseRate * multiplier;
+    // Calculate rate for the adjusted target time
+    const adjustedDuration = durationSec * targetTimeMultiplier;
+    return -Math.log(priceRatio) / adjustedDuration;
   };
 
   // Calculate preview points for the decay graph
