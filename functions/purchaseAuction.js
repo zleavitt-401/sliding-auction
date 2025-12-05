@@ -16,6 +16,7 @@ const db = admin.firestore();
 
 /**
  * Calculate expected price based on auction timing and pricing formula
+ * Mirrors the client-side priceCalculations.js logic exactly
  * @param {Object} auction - Auction data
  * @param {number} timestamp - Timestamp to calculate price for
  * @returns {number} Expected price in cents
@@ -37,36 +38,37 @@ function calculateExpectedPrice(auction, timestamp) {
     return floorPrice;
   }
 
-  const priceRange = startingPrice - floorPrice;
-
   // Transparent mode: use explicit formula
   if (pricingMode === 'transparent' && pricingConfig?.formula) {
     const formula = pricingConfig.formula;
 
     if (formula === 'linear') {
-      // Linear decay
-      const decayPerSecond = priceRange / duration;
-      const price = startingPrice - (decayPerSecond * elapsedSeconds);
+      // Linear decay: starting - (rate * elapsed)
+      const linearRate = (startingPrice - floorPrice) / duration;
+      const price = startingPrice - (linearRate * elapsedSeconds);
       return Math.max(floorPrice, Math.round(price));
+
     } else if (formula === 'exponential') {
-      // Exponential decay (fast at start, slower at end)
-      const progress = elapsedSeconds / duration;
-      const decayFactor = Math.pow(1 - progress, 2); // Quadratic
-      const price = floorPrice + (priceRange * decayFactor);
+      // Exponential decay: starting * e^(-rate * elapsed)
+      // Use the decayRate stored when auction was created
+      const expRate = pricingConfig.decayRate || 0.0001;
+      const price = startingPrice * Math.exp(-expRate * elapsedSeconds);
       return Math.max(floorPrice, Math.round(price));
+
     } else if (formula === 'stepped') {
-      // Stepped decay
-      const steps = pricingConfig.steps || 10;
-      const stepDuration = duration / steps;
-      const currentStep = Math.floor(elapsedSeconds / stepDuration);
-      const pricePerStep = priceRange / steps;
-      const price = startingPrice - (pricePerStep * currentStep);
+      // Stepped decay: drop by fixed amount at intervals
+      // Use stepCount if provided, otherwise fall back to stepInterval calculation
+      const stepCount = pricingConfig.stepCount || 10;
+      const stepInterval = pricingConfig.stepInterval || Math.floor(duration / stepCount);
+      const stepAmount = pricingConfig.stepAmount || Math.floor((startingPrice - floorPrice) / stepCount);
+      const numSteps = Math.floor(elapsedSeconds / stepInterval);
+      const price = startingPrice - (stepAmount * numSteps);
       return Math.max(floorPrice, Math.round(price));
     }
   }
 
   // Default: linear decay (for algorithmic mode or unknown formula)
-  const decayPerSecond = priceRange / duration;
+  const decayPerSecond = (startingPrice - floorPrice) / duration;
   const price = startingPrice - (decayPerSecond * elapsedSeconds);
   return Math.max(floorPrice, Math.round(price));
 }
@@ -182,19 +184,32 @@ exports.purchaseAuction = functions.https.onCall(async (data, context) => {
 
       const closesAt = openedAt + (durationSeconds * 1000);
 
-      // Add 1 second tolerance buffer to account for network latency
-      // The full window is: openedAt to closesAt + 1 second
-      const TIMING_TOLERANCE_MS = 1000;
+      // Add generous tolerance to account for:
+      // 1. Cloud function cold start latency (can be 3-5 seconds)
+      // 2. Network round-trip time
+      // 3. Clock skew between client and server
+      // The user experience is: they clicked purchase DURING the shield window
+      // If the request arrives a few seconds late due to cold start, we should honor it
+      const TIMING_TOLERANCE_MS = 5000; // 5 seconds extra tolerance
 
-      if (now < openedAt || now > (closesAt + TIMING_TOLERANCE_MS)) {
-        console.log(`[purchaseAuction] Shield timing invalid: now=${now}, open=${openedAt}, close=${closesAt}, tolerance=${TIMING_TOLERANCE_MS}ms`);
+      // Also check if purchase was initiated within the shield window
+      // by using the purchaseTimestamp from the client
+      const purchaseInitiatedAt = purchaseTimestamp || now;
+      const purchaseWasInWindow = purchaseInitiatedAt >= openedAt && purchaseInitiatedAt <= closesAt;
+
+      if (!purchaseWasInWindow && (now < openedAt || now > (closesAt + TIMING_TOLERANCE_MS))) {
+        console.log(`[purchaseAuction] Shield timing invalid:`);
+        console.log(`  now=${now}, purchaseInitiated=${purchaseInitiatedAt}`);
+        console.log(`  open=${openedAt}, close=${closesAt}`);
+        console.log(`  tolerance=${TIMING_TOLERANCE_MS}ms`);
+        console.log(`  purchaseWasInWindow=${purchaseWasInWindow}`);
         throw new functions.https.HttpsError(
           'failed-precondition',
           'Your shield window has closed. Try again with a new shield.'
         );
       }
 
-      console.log(`[purchaseAuction] Shield timing valid: now=${now}, open=${openedAt}, close=${closesAt}`);
+      console.log(`[purchaseAuction] Shield timing valid: now=${now}, open=${openedAt}, close=${closesAt}, purchaseInWindow=${purchaseWasInWindow}`);
 
       // Calculate actual expected price based on purchase timestamp if provided
       // This ensures client interpolation matches server calculation
@@ -222,13 +237,25 @@ exports.purchaseAuction = functions.https.onCall(async (data, context) => {
       }
 
       // T176-T177: Check price hasn't increased significantly
-      // Allow small tolerance (2%) to account for rounding differences
-      const PRICE_TOLERANCE_PERCENT = 0.02; // 2%
-      const maxAllowedPrice = expectedPrice * (1 + PRICE_TOLERANCE_PERCENT);
+      // Allow tolerance to account for:
+      // 1. Rounding differences between client and server
+      // 2. Time lag between display and purchase (cold start can be 3-5 seconds)
+      // 3. Price interpolation differences
+      // In a descending auction, the price can only go DOWN, so if currentPrice > expectedPrice
+      // something is wrong (stale client data or timing issue)
+      const PRICE_TOLERANCE_PERCENT = 0.10; // 10% tolerance for lag
+      const PRICE_TOLERANCE_ABSOLUTE = 1000; // $10 absolute tolerance
+      const maxAllowedPrice = Math.max(
+        expectedPrice * (1 + PRICE_TOLERANCE_PERCENT),
+        expectedPrice + PRICE_TOLERANCE_ABSOLUTE
+      );
 
       if (currentPrice > maxAllowedPrice) {
-        // Price went UP beyond tolerance - reject to protect user
-        console.log(`[purchaseAuction] Price increased beyond tolerance: ${currentPrice} > ${maxAllowedPrice} (expected: ${expectedPrice})`);
+        // Price went UP beyond tolerance - this shouldn't happen in a descending auction
+        // unless the client had very stale data
+        console.log(`[purchaseAuction] Price mismatch beyond tolerance:`);
+        console.log(`  currentPrice=${currentPrice}, expectedPrice=${expectedPrice}`);
+        console.log(`  maxAllowedPrice=${maxAllowedPrice}`);
         throw new functions.https.HttpsError(
           'failed-precondition',
           `Price has changed. Expected $${(expectedPrice / 100).toFixed(2)}, ` +
