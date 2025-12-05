@@ -1109,14 +1109,37 @@
 
 /* Current Price Display */
 .live-auction__current-price {
-  background: linear-gradient(135deg, var(--color-auction-red) 0%, #C32E3A 100%);
-  border-radius: 12px;
+  /* Glass morphism effect */
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
   padding: var(--spacing-2xl);
   text-align: center;
-  color: white;
-  box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   margin-bottom: var(--spacing-xl);
-  transition: transform var(--animation-duration) var(--animation-easing);
+  transition: all var(--animation-duration) var(--animation-easing);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle gradient overlay for depth */
+.live-auction__current-price::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
 }
 
 .live-auction__current-price.price-updated {
@@ -1129,7 +1152,9 @@
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 12px 32px rgba(230, 57, 70, 0.5);
+    box-shadow:
+      0 12px 48px rgba(230, 57, 70, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
   100% {
     transform: scale(1);
@@ -1137,16 +1162,21 @@
 }
 
 .live-auction__current-price.price-near-floor {
-  background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.4);
   animation: priceWarning 1.5s ease-in-out infinite;
 }
 
 @keyframes priceWarning {
   0%, 100% {
-    box-shadow: 0 8px 24px rgba(220, 53, 69, 0.3);
+    box-shadow:
+      0 8px 32px rgba(220, 53, 69, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
   50% {
-    box-shadow: 0 12px 36px rgba(220, 53, 69, 0.6);
+    box-shadow:
+      0 12px 48px rgba(220, 53, 69, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 }
 
@@ -1154,23 +1184,49 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.9;
-  margin-bottom: var(--spacing-sm);
+  letter-spacing: 1.5px;
+  color: #6C757D;
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  z-index: 1;
 }
 
 .current-price-value {
-  font-size: 4rem;
+  font-size: 5rem;
   font-weight: var(--font-weight-bold);
   line-height: 1;
   margin: var(--spacing-md) 0;
   font-variant-numeric: tabular-nums;
+  position: relative;
+  z-index: 1;
+
+  /* Gradient text effect */
+  background: linear-gradient(135deg, #FF6B35 0%, #E63946 50%, #C32E3A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  /* Fallback for browsers that don't support background-clip */
+  color: #E63946;
+
+  /* Subtle glow effect */
+  filter: drop-shadow(0 2px 8px rgba(230, 57, 70, 0.3));
+}
+
+/* Support for gradient text */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .current-price-value {
+    color: transparent;
+  }
 }
 
 .current-price-range {
   font-size: var(--font-size-base);
-  opacity: 0.8;
+  color: #6C757D;
   margin-top: var(--spacing-md);
+  font-weight: var(--font-weight-medium);
+  position: relative;
+  z-index: 1;
 }
 
 /* Time Remaining Progress Bar */
