@@ -2,8 +2,14 @@
  * Price Calculations Utility
  * Client-side price interpolation for smooth price updates
  *
- * Mirrors server-side pricing logic from updateAuctionPrice.js
+ * Uses shared pricing logic from ../shared/priceFormulas.js
+ * This ensures client and server calculate identical prices
  */
+
+import {
+  calculateTransparentPrice as sharedCalculateTransparentPrice,
+  generatePreviewPoints as sharedGeneratePreviewPoints
+} from '../shared/priceFormulas.js';
 
 /**
  * Calculate expected price at current time
@@ -19,60 +25,20 @@ export function calculateExpectedPrice(auction) {
   const startTime = auction.startTime?.toMillis ? auction.startTime.toMillis() : auction.startTime;
   const elapsedSeconds = Math.floor((now - startTime) / 1000);
 
-  // For transparent mode, we can predict the price using the formula
+  // For transparent mode, we can predict the price using the shared formula
   if (auction.pricingMode === 'transparent') {
-    return calculateTransparentPrice(auction, elapsedSeconds);
+    return sharedCalculateTransparentPrice({
+      startingPrice: auction.startingPrice,
+      floorPrice: auction.floorPrice,
+      duration: auction.duration,
+      formula: auction.pricingConfig?.formula || 'linear',
+      pricingConfig: auction.pricingConfig || {}
+    }, elapsedSeconds);
   }
 
   // For algorithmic mode, we cannot predict (depends on viewer/shield counts)
   // Fall back to last server price
   return auction.currentPrice;
-}
-
-/**
- * Calculate transparent mode price
- * Mirrors logic from updateAuctionPrice.js lines 181-211
- * @param {Object} auction - Auction data
- * @param {number} elapsedSeconds - Time elapsed since start
- * @returns {number} Price in cents
- */
-function calculateTransparentPrice(auction, elapsedSeconds) {
-  const { startingPrice, floorPrice, duration, pricingConfig } = auction;
-  const formula = pricingConfig?.formula || 'linear';
-
-  let price;
-
-  switch (formula) {
-    case 'linear':
-      // Linear decay: starting - (rate * elapsed)
-      const linearRate = (startingPrice - floorPrice) / duration;
-      price = startingPrice - (linearRate * elapsedSeconds);
-      break;
-
-    case 'exponential':
-      // Exponential decay: starting * e^(-rate * elapsed)
-      const expRate = pricingConfig.decayRate || 0.0001;
-      price = startingPrice * Math.exp(-expRate * elapsedSeconds);
-      break;
-
-    case 'stepped':
-      // Stepped decay: drop by fixed amount at intervals
-      // Use stepCount if provided, otherwise fall back to stepInterval calculation
-      const stepCount = pricingConfig.stepCount || 10;
-      const stepInterval = pricingConfig.stepInterval || Math.floor(duration / stepCount);
-      const stepAmount = pricingConfig.stepAmount || Math.floor((startingPrice - floorPrice) / stepCount);
-      const numSteps = Math.floor(elapsedSeconds / stepInterval);
-      price = startingPrice - (stepAmount * numSteps);
-      break;
-
-    default:
-      console.warn(`[calculateTransparentPrice] Unknown formula: ${formula}, using linear`);
-      const defaultRate = (startingPrice - floorPrice) / duration;
-      price = startingPrice - (defaultRate * elapsedSeconds);
-  }
-
-  // Clamp to floor price
-  return Math.max(floorPrice, Math.round(price));
 }
 
 /**
@@ -94,7 +60,14 @@ export function generatePredictedPricePoints(auction, numPoints = 100) {
     const progress = i / numPoints;
     const elapsedSeconds = Math.floor(duration * progress);
     const timestamp = startTime + (elapsedSeconds * 1000);
-    const price = calculateTransparentPrice(auction, elapsedSeconds);
+
+    const price = sharedCalculateTransparentPrice({
+      startingPrice: auction.startingPrice,
+      floorPrice: auction.floorPrice,
+      duration: auction.duration,
+      formula: auction.pricingConfig?.formula || 'linear',
+      pricingConfig: auction.pricingConfig || {}
+    }, elapsedSeconds);
 
     points.push({
       x: timestamp,
@@ -104,3 +77,6 @@ export function generatePredictedPricePoints(auction, numPoints = 100) {
 
   return points;
 }
+
+// Re-export shared functions for convenience
+export { sharedCalculateTransparentPrice as calculateTransparentPrice };

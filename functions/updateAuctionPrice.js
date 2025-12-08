@@ -10,6 +10,10 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
+// Shared modules - keep in sync with client-side versions
+const { calculateTransparentPrice } = require('./shared/priceFormulas');
+const { FLOOR_TIMER_DURATION, ALGORITHMIC_DEFAULTS } = require('./shared/constants');
+
 // Initialize Firebase Admin (only once across all functions)
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -17,9 +21,6 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const rtdb = admin.database();
-
-// Constants
-const FLOOR_TIMER_DURATION = 60; // 60 seconds at floor before ending
 
 /**
  * Scheduled function triggered every 1 second via Cloud Scheduler
@@ -94,8 +95,14 @@ async function updateSingleAuction(auction) {
 
   // Calculate new price based on pricing mode
   if (auction.pricingMode === 'transparent') {
-    // T152-T154: Implement transparent mode formulas
-    newPrice = calculateTransparentPrice(auction, elapsedSeconds);
+    // T152-T154: Use shared transparent mode formulas
+    newPrice = calculateTransparentPrice({
+      startingPrice: auction.startingPrice,
+      floorPrice: auction.floorPrice,
+      duration: auction.duration,
+      formula: auction.pricingConfig?.formula || 'linear',
+      pricingConfig: auction.pricingConfig || {}
+    }, elapsedSeconds);
   } else {
     // T155-T158: Implement algorithmic mode
     const result = await calculateAlgorithmicPrice(auction, elapsedSeconds, progressPercent);
@@ -172,46 +179,8 @@ async function updateSingleAuction(auction) {
   console.log(`[updateAuctionPrice] Auction ${auction.id}: $${(newPrice / 100).toFixed(2)}`);
 }
 
-/**
- * T152-T154: Calculate price for transparent mode
- * @param {Object} auction - Auction data
- * @param {number} elapsedSeconds - Time elapsed since start
- * @returns {number} New price in cents
- */
-function calculateTransparentPrice(auction, elapsedSeconds) {
-  const { startingPrice, floorPrice, duration, pricingConfig } = auction;
-  const formula = pricingConfig?.formula || 'linear';
-
-  switch (formula) {
-    case 'linear':
-      // T152: Linear decay: starting - (rate * elapsed)
-      // Calculate rate so price reaches floor at duration end
-      const linearRate = (startingPrice - floorPrice) / duration;
-      const linearPrice = startingPrice - (linearRate * elapsedSeconds);
-      return Math.max(floorPrice, Math.round(linearPrice));
-
-    case 'exponential':
-      // T153: Exponential decay: starting * e^(-rate * elapsed)
-      // Calculate rate so price reaches ~floor at duration end
-      const expRate = pricingConfig.decayRate || 0.0001;
-      const expPrice = startingPrice * Math.exp(-expRate * elapsedSeconds);
-      return Math.max(floorPrice, Math.round(expPrice));
-
-    case 'stepped':
-      // T154: Stepped decay: drop by fixed amount at intervals
-      // Use stepCount if provided, otherwise fall back to stepInterval calculation
-      const stepCount = pricingConfig.stepCount || 10;
-      const stepInterval = pricingConfig.stepInterval || Math.floor(duration / stepCount);
-      const stepAmount = pricingConfig.stepAmount || Math.floor((startingPrice - floorPrice) / stepCount);
-      const numSteps = Math.floor(elapsedSeconds / stepInterval);
-      const steppedPrice = startingPrice - (stepAmount * numSteps);
-      return Math.max(floorPrice, steppedPrice);
-
-    default:
-      console.warn(`[calculateTransparentPrice] Unknown formula: ${formula}, using linear`);
-      return calculateTransparentPrice({ ...auction, pricingConfig: { formula: 'linear' } }, elapsedSeconds);
-  }
-}
+// NOTE: calculateTransparentPrice is now imported from ./shared/priceFormulas.js
+// This ensures client and server use identical pricing logic
 
 /**
  * T155-T158: Calculate price for algorithmic mode
@@ -223,8 +192,8 @@ function calculateTransparentPrice(auction, elapsedSeconds) {
 async function calculateAlgorithmicPrice(auction, elapsedSeconds, progressPercent) {
   const { currentPrice, floorPrice, pricingConfig } = auction;
 
-  // T155: Base decay rate
-  const baseDecayRate = pricingConfig?.baseDecay || 0.001; // 0.1% per second default
+  // T155: Base decay rate - use shared defaults
+  const baseDecayRate = pricingConfig?.baseDecay || ALGORITHMIC_DEFAULTS.BASE_DECAY;
   let decayMultiplier = 1 - baseDecayRate;
 
   const factors = {
@@ -236,21 +205,21 @@ async function calculateAlgorithmicPrice(auction, elapsedSeconds, progressPercen
 
   // T156: Viewer count adjustment
   const viewerCount = auction.viewerCount || 0;
-  const viewerMultiplier = pricingConfig?.viewerInfluence || 0.002; // 0.2% per 50 viewers
+  const viewerMultiplier = pricingConfig?.viewerInfluence || ALGORITHMIC_DEFAULTS.VIEWER_INFLUENCE;
   const viewerAdjustment = viewerMultiplier * (viewerCount / 50);
   decayMultiplier *= (1 - viewerAdjustment);
   factors.viewerAdjustment = viewerAdjustment;
 
   // T157: Shield activity adjustment
   const openShields = auction.openShieldCount || 0;
-  const shieldInfluence = pricingConfig?.shieldInfluence || 0.003; // 0.3% per 10 shields
+  const shieldInfluence = pricingConfig?.shieldInfluence || ALGORITHMIC_DEFAULTS.SHIELD_INFLUENCE;
   const shieldAdjustment = shieldInfluence * (openShields / 10);
   decayMultiplier *= (1 - shieldAdjustment);
   factors.shieldAdjustment = shieldAdjustment;
 
-  // T158: Time remaining adjustment (accelerate if < 20% time remaining)
-  if (progressPercent > 80) {
-    const timeAccelerator = pricingConfig?.timeAccelerator || 1.5;
+  // T158: Time remaining adjustment (accelerate if past threshold)
+  if (progressPercent > ALGORITHMIC_DEFAULTS.TIME_PRESSURE_THRESHOLD) {
+    const timeAccelerator = pricingConfig?.timeAccelerator || ALGORITHMIC_DEFAULTS.TIME_ACCELERATOR;
     decayMultiplier *= (1 / timeAccelerator); // Faster decay
     factors.timeAdjustment = timeAccelerator;
   }

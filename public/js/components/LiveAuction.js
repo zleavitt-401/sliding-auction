@@ -4,6 +4,7 @@
  */
 
 import { formatPrice, formatDuration } from '../utils/formatters.js';
+import { getUserFriendlyError } from '../utils/errorMessages.js';
 import { useAuction, getAuctionTimeRemaining, getAuctionProgress, isAuctionEndingSoon, isPriceNearFloor } from '../hooks/useAuction.js';
 import { usePresence } from '../hooks/usePresence.js';
 import { useUser } from '../hooks/useUser.js';
@@ -263,19 +264,8 @@ export function LiveAuction({ auction: initialAuction }) {
                   // T077: Handle error - show specific error message
                   console.error('[LiveAuction] Purchase failed:', result.error);
 
-                  // Map error codes to user-friendly messages
-                  let message = result.error || 'An unexpected error occurred. Please try again.';
-
-                  if (message.includes('insufficient balance')) {
-                    message = 'You don\'t have enough balance to complete this purchase.';
-                  } else if (message.includes('shield closed') || message.includes('shield not open')) {
-                    message = 'Your shield has closed. Please open it again to purchase.';
-                  } else if (message.includes('auction ended') || message.includes('already sold')) {
-                    message = 'This auction has already ended. Another user may have purchased the item.';
-                  } else if (message.includes('not authenticated')) {
-                    message = 'You must be logged in to make a purchase.';
-                  }
-
+                  // Use centralized error message utility
+                  const message = getUserFriendlyError(result.error);
                   setErrorMessage(message);
                   setShowErrorModal(true);
                 }
